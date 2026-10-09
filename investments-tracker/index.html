@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinVest Investments | Portfolio Heatmap & Live Finnhub Valuation</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+              950: '#1e1b4b',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Google Font: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: rgba(75, 85, 99, 0.5);
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: rgba(75, 85, 99, 0.8);
+    }
+
+    .num-tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.97) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-animate {
+      animation: modalFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+
+  <!-- React 18, ReactDOM, and Babel Standalone (cdnjs Cloudflare CDN - No crossorigin to prevent file:// protocol CORS issues) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js"></script>
+
+  <!-- Secondary CDN Fallbacks -->
+  <script>
+    if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>');
+  </script>
+  <script>
+    if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>');
+  </script>
+  <script>
+    if (!window.Babel) document.write('<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>');
+  </script>
+
+  <!-- Error Catcher to prevent blank screen without visible feedback -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('App runtime error:', e);
+      var root = document.getElementById('root');
+      if (root && (!root.children.length || root.querySelector('#app-loader'))) {
+        root.innerHTML = '<div style="padding: 24px; font-family: sans-serif; color: #e11d48; background: #fff1f2; border: 1px solid #fda4af; border-radius: 12px; margin: 32px max(16px, calc((100% - 600px)/2));">' +
+          '<h2 style="margin: 0 0 8px; font-size: 18px; font-weight: 700;">⚠️ Application Initialization Error</h2>' +
+          '<p style="margin: 0; font-size: 14px; color: #4b5563;">' + (e.message || 'Script error occurred') + '</p>' +
+          '<p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Source: ' + (e.filename || '') + ' line ' + (e.lineno || '') + '</p>' +
+        '</div>';
+      }
+    });
+  </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-200">
+  <div id="root" class="min-h-full flex flex-col">
+    <div id="app-loader" class="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-500 text-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <span>Loading FinVest Investment Portfolio...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- React Application Script -->
+  <script type="text/babel" data-presets="react,env">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // --- ICON SYSTEM (Lucide-style Clean SVGs - All multi-elements wrapped in React Fragments) ---
+    const Icon = ({ name, size = 18, className = "" }) => {
+      const icons = {
+        trendingUp: <path d="M22 7 13.5 15.5 8.5 10.5 2 17M16 7h6v6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        trendingDown: <path d="m22 17-8.5-8.5-5 5L2 7M16 17h6v-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        dollarSign: <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        plus: <path d="M5 12h14M12 5v14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        trash: <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        edit: <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        search: <><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" strokeWidth="2" /><path d="m21 21-4.3-4.3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></>,
+        sun: <><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></>,
+        moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        upload: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        database: <><ellipse cx="12" cy="5" rx="9" ry="3" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5M3 12c0 1.66 4 3 9 3s9-1.34 9-3" fill="none" stroke="currentColor" strokeWidth="2" /></>,
+        shieldCheck: <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.8 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        refresh: <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16M16 16h5v5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        x: <path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        menu: <path d="M4 12h16M4 6h16M4 18h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        key: <><path d="m21 2-2 2m-1.5 1.5L14 9l-2-2-4 4 2 2-3 3-2-2-3 3 5 5 13-13z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><circle cx="7.5" cy="16.5" r="1.5" fill="none" stroke="currentColor" strokeWidth="2" /></>,
+        grid: <><rect width="7" height="7" x="3" y="3" rx="1" fill="none" stroke="currentColor" strokeWidth="2" /><rect width="7" height="7" x="14" y="3" rx="1" fill="none" stroke="currentColor" strokeWidth="2" /><rect width="7" height="7" x="14" y="14" rx="1" fill="none" stroke="currentColor" strokeWidth="2" /><rect width="7" height="7" x="3" y="14" rx="1" fill="none" stroke="currentColor" strokeWidth="2" /></>,
+        arrowUpRight: <path d="M7 17 17 7M7 7h10v10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        arrowDownRight: <path d="m7 7 10 10M17 7v10H7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        externalLink: <><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="15 3 21 3 21 9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><line x1="10" y1="14" x2="21" y2="3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>,
+        info: <><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 16v-4M12 8h.01" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></>,
+        eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" fill="none" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2" /></>,
+        layers: <><polygon points="12 2 2 7 12 12 22 7 12 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="2 17 12 22 22 17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="2 12 12 17 22 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>
+      };
+
+      return (
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          className={`inline-block shrink-0 ${className}`}
+        >
+          {icons[name] || icons.trendingUp}
+        </svg>
+      );
+    };
+
+    // --- CURRENCY & NUMBER FORMATTERS ---
+    const formatCurrency = (num) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(num || 0);
+    };
+
+    const formatCompactCurrency = (num) => {
+      if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
+      if (num >= 10000) return `$${(num / 1000).toFixed(1)}k`;
+      return formatCurrency(num);
+    };
+
+    // --- INITIAL SEED PORTFOLIO ---
+    const SEED_ASSETS = [
+      // Stocks
+      { id: 'ast_1', category: 'stock', ticker: 'NVDA', name: 'NVIDIA Corp', quantity: 45, costBasis: 98.50, currentPrice: 132.80, notes: 'AI compute leadership' },
+      { id: 'ast_2', category: 'stock', ticker: 'AAPL', name: 'Apple Inc', quantity: 60, costBasis: 175.20, currentPrice: 228.40, notes: 'Services & ecosystem cashflow' },
+      { id: 'ast_3', category: 'stock', ticker: 'MSFT', name: 'Microsoft Corp', quantity: 40, costBasis: 345.00, currentPrice: 420.50, notes: 'Azure & enterprise software' },
+      { id: 'ast_4', category: 'stock', ticker: 'AMZN', name: 'Amazon.com Inc', quantity: 50, costBasis: 142.10, currentPrice: 188.75, notes: 'AWS cloud & e-commerce' },
+      { id: 'ast_5', category: 'stock', ticker: 'TSLA', name: 'Tesla Inc', quantity: 35, costBasis: 245.00, currentPrice: 218.20, notes: 'EV & energy storage' },
+      
+      // ETFs
+      { id: 'ast_6', category: 'etf', ticker: 'VOO', name: 'Vanguard S&P 500 ETF', quantity: 120, costBasis: 410.00, currentPrice: 532.50, notes: 'Core index foundation' },
+      { id: 'ast_7', category: 'etf', ticker: 'QQQ', name: 'Invesco QQQ Trust (Nasdaq 100)', quantity: 75, costBasis: 380.00, currentPrice: 492.10, notes: 'Large-cap tech exposure' },
+      { id: 'ast_8', category: 'etf', ticker: 'SCHD', name: 'Schwab US Dividend Equity', quantity: 150, costBasis: 74.20, currentPrice: 83.40, notes: 'Cash dividend yield' },
+      
+      // Alternative Assets
+      { id: 'ast_9', category: 'alternative', ticker: 'BTC', name: 'Bitcoin (Cold Storage)', quantity: 0.65, costBasis: 42000.00, currentPrice: 63500.00, notes: 'Digital gold store of value' },
+      { id: 'ast_10', category: 'alternative', ticker: 'GOLD', name: 'Physical Gold Bullion (1 oz)', quantity: 4.0, costBasis: 2050.00, currentPrice: 2650.00, notes: 'Physical sovereign hedge' },
+      { id: 'ast_11', category: 'alternative', ticker: 'REIT-SYN', name: 'Austin Multifamily Syndication', quantity: 1.0, costBasis: 15000.00, currentPrice: 16200.00, notes: 'Class A apartments private equity' }
+    ];
+
+    // --- RECURSIVE SQUARIFIED/BSP TREEMAP GENERATOR ---
+    function computeTreemapLayout(items, x, y, width, height) {
+      if (!items || items.length === 0) return [];
+      if (items.length === 1) {
+        return [{ ...items[0], x, y, w: width, h: height }];
+      }
+
+      const totalVal = items.reduce((acc, cur) => acc + cur.currentValue, 0);
+      if (totalVal <= 0) return [];
+
+      // Find split index closest to 50%
+      const half = totalVal / 2;
+      let acc = 0;
+      let splitIdx = 1;
+      for (let i = 0; i < items.length; i++) {
+        acc += items[i].currentValue;
+        if (acc >= half) {
+          splitIdx = (i === 0) ? 1 : i;
+          break;
+        }
+      }
+      splitIdx = Math.max(1, Math.min(items.length - 1, splitIdx));
+
+      const leftSlice = items.slice(0, splitIdx);
+      const rightSlice = items.slice(splitIdx);
+
+      const leftVal = leftSlice.reduce((acc, cur) => acc + cur.currentValue, 0);
+      const ratio = leftVal / totalVal;
+
+      const results = [];
+      if (width >= height) {
+        // Split horizontally
+        const wLeft = width * ratio;
+        results.push(...computeTreemapLayout(leftSlice, x, y, wLeft, height));
+        results.push(...computeTreemapLayout(rightSlice, x + wLeft, y, width - wLeft, height));
+      } else {
+        // Split vertically
+        const hTop = height * ratio;
+        results.push(...computeTreemapLayout(leftSlice, x, y, width, hTop));
+        results.push(...computeTreemapLayout(rightSlice, x, y + hTop, width, height - hTop));
+      }
+      return results;
+    }
+
+    // Color gradient resolver based on percentage return
+    function getReturnColor(pct) {
+      if (pct >= 40) return { bg: '#047857', border: '#065f46', text: '#ecfdf5', label: 'Dark Emerald' };
+      if (pct >= 20) return { bg: '#059669', border: '#047857', text: '#ffffff', label: 'Emerald' };
+      if (pct >= 10) return { bg: '#10b981', border: '#059669', text: '#ffffff', label: 'Green' };
+      if (pct >= 0)  return { bg: '#34d399', border: '#10b981', text: '#064e3b', label: 'Mint' };
+      if (pct >= -10) return { bg: '#f87171', border: '#ef4444', text: '#450a0a', label: 'Light Rose' };
+      if (pct >= -25) return { bg: '#e11d48', border: '#be123c', text: '#ffffff', label: 'Rose' };
+      return { bg: '#9f1239', border: '#881337', text: '#fff1f2', label: 'Deep Crimson' };
+    }
+
+    // --- MAIN REACT APPLICATION ---
+    function App() {
+      // 1. Theme State (synchronized with finvest_theme)
+      const [theme, setTheme] = useState(() => {
+        const saved = localStorage.getItem('finvest_theme');
+        if (saved) return saved;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      });
+
+      useEffect(() => {
+        const root = document.documentElement;
+        if (theme === 'dark') {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+        localStorage.setItem('finvest_theme', theme);
+      }, [theme]);
+
+      const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+      };
+
+      // 2. Data Persistence (finvest_investments_*)
+      const [assets, setAssets] = useState(() => {
+        try {
+          const raw = localStorage.getItem('finvest_investments_assets');
+          return raw ? JSON.parse(raw) : SEED_ASSETS;
+        } catch (e) {
+          return SEED_ASSETS;
+        }
+      });
+
+      useEffect(() => {
+        localStorage.setItem('finvest_investments_assets', JSON.stringify(assets));
+      }, [assets]);
+
+      const [finnhubKey, setFinnhubKey] = useState(() => {
+        return localStorage.getItem('finvest_investments_finnhub_key') || '';
+      });
+
+      useEffect(() => {
+        localStorage.setItem('finvest_investments_finnhub_key', finnhubKey);
+      }, [finnhubKey]);
+
+      // Navigation Suite Links
+      const suiteApps = [
+        { name: 'Budget', url: 'https://budget.yourdomain.com', active: false, desc: 'Cashflow & Expenses' },
+        { name: 'Retirement', url: 'https://retirement.yourdomain.com', active: false, desc: 'FIRE & Projections' },
+        { name: 'Investments', url: 'https://investments.yourdomain.com', active: true, desc: 'Holdings & Dividends' },
+        { name: 'Net Worth', url: 'https://networth.yourdomain.com', active: false, desc: 'Assets & Liabilities' },
+      ];
+
+      // UI States
+      const [treemapFilter, setTreemapFilter] = useState('all'); // 'all', 'stock', 'etf', 'alternative'
+      const [searchQuery, setSearchQuery] = useState('');
+      const [tableCategoryFilter, setTableCategoryFilter] = useState('all');
+      const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+      const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+      const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+      const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
+      const [editingAsset, setEditingAsset] = useState(null);
+      const [hoveredTreemapItem, setHoveredTreemapItem] = useState(null);
+      const [isFetchingQuotes, setIsFetchingQuotes] = useState(false);
+      const [fetchProgress, setFetchProgress] = useState(null);
+      const [lastRefreshedAt, setLastRefreshedAt] = useState('Today, point-in-time');
+      const [toast, setToast] = useState(null);
+
+      const showToast = (message) => {
+        setToast(message);
+        setTimeout(() => setToast(null), 3500);
+      };
+
+      // Calculate Derived Asset Fields
+      const enrichedAssets = useMemo(() => {
+        return assets.map(a => {
+          const qty = Number(a.quantity) || 0;
+          const costBasis = Number(a.costBasis) || 0;
+          const currentPrice = Number(a.currentPrice) || 0;
+
+          const totalCost = qty * costBasis;
+          const currentValue = qty * currentPrice;
+          const unrealizedDollar = currentValue - totalCost;
+          const unrealizedPercent = totalCost > 0 ? (unrealizedDollar / totalCost) * 100 : 0;
+
+          return {
+            ...a,
+            quantity: qty,
+            costBasis,
+            currentPrice,
+            totalCost,
+            currentValue,
+            unrealizedDollar,
+            unrealizedPercent
+          };
+        });
+      }, [assets]);
+
+      // Portfolio Summary Metrics
+      const portfolioTotals = useMemo(() => {
+        let totalValue = 0;
+        let totalCost = 0;
+        let stocksVal = 0;
+        let etfsVal = 0;
+        let altVal = 0;
+
+        enrichedAssets.forEach(a => {
+          totalValue += a.currentValue;
+          totalCost += a.totalCost;
+          if (a.category === 'stock') stocksVal += a.currentValue;
+          else if (a.category === 'etf') etfsVal += a.currentValue;
+          else altVal += a.currentValue;
+        });
+
+        const totalGainDollar = totalValue - totalCost;
+        const totalGainPercent = totalCost > 0 ? (totalGainDollar / totalCost) * 100 : 0;
+
+        return {
+          totalValue,
+          totalCost,
+          totalGainDollar,
+          totalGainPercent,
+          stocksVal,
+          etfsVal,
+          altVal,
+          stocksPct: totalValue > 0 ? (stocksVal / totalValue) * 100 : 0,
+          etfsPct: totalValue > 0 ? (etfsVal / totalValue) * 100 : 0,
+          altPct: totalValue > 0 ? (altVal / totalValue) * 100 : 0
+        };
+      }, [enrichedAssets]);
+
+      // Treemap Data Layout
+      const treemapRectangles = useMemo(() => {
+        const filtered = enrichedAssets.filter(a => {
+          if (treemapFilter === 'all') return true;
+          return a.category === treemapFilter;
+        }).sort((a, b) => b.currentValue - a.currentValue);
+
+        return computeTreemapLayout(filtered, 0, 0, 1000, 520);
+      }, [enrichedAssets, treemapFilter]);
+
+      // Filtered Assets for Table
+      const filteredTableAssets = useMemo(() => {
+        return enrichedAssets.filter(a => {
+          if (tableCategoryFilter !== 'all' && a.category !== tableCategoryFilter) return false;
+          if (searchQuery.trim() !== '') {
+            const q = searchQuery.toLowerCase();
+            return a.ticker.toLowerCase().includes(q) ||
+                   a.name.toLowerCase().includes(q) ||
+                   (a.notes || '').toLowerCase().includes(q);
+          }
+          return true;
+        }).sort((a, b) => b.currentValue - a.currentValue);
+      }, [enrichedAssets, tableCategoryFilter, searchQuery]);
+
+      // --- FINNHUB LIVE QUOTE FETCHER ---
+      const handleFetchLiveQuotes = async () => {
+        if (!finnhubKey.trim()) {
+          setIsApiKeyModalOpen(true);
+          return;
+        }
+
+        setIsFetchingQuotes(true);
+        const quotableAssets = assets.filter(a => (a.category === 'stock' || a.category === 'etf') && a.ticker);
+        let updatedCount = 0;
+        const updatedList = [...assets];
+
+        for (let i = 0; i < quotableAssets.length; i++) {
+          const item = quotableAssets[i];
+          setFetchProgress(`Fetching ${item.ticker} (${i + 1}/${quotableAssets.length})...`);
+
+          try {
+            const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(item.ticker.toUpperCase())}&token=${encodeURIComponent(finnhubKey.trim())}`;
+            const res = await fetch(url);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && typeof data.c === 'number' && data.c > 0) {
+                const idx = updatedList.findIndex(a => a.id === item.id);
+                if (idx !== -1) {
+                  updatedList[idx] = {
+                    ...updatedList[idx],
+                    currentPrice: data.c,
+                    priceChange: data.d,
+                    priceChangePct: data.dp
+                  };
+                  updatedCount++;
+                }
+              }
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch quote for ${item.ticker}:`, err);
+          }
+
+          // Polite throttle for Finnhub free rate limit
+          await new Promise(r => setTimeout(r, 180));
+        }
+
+        setAssets(updatedList);
+        setIsFetchingQuotes(false);
+        setFetchProgress(null);
+        setLastRefreshedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        showToast(`Updated live market prices for ${updatedCount} assets!`);
+      };
+
+      // Mock / Offline Simulation Quotes Trigger (For testing when no key is entered)
+      const handleSimulateMarketChange = () => {
+        setAssets(prev => prev.map(a => {
+          const deltaPct = (Math.random() * 4 - 1.8) / 100; // -1.8% to +2.2%
+          const newPrice = Math.max(0.01, a.currentPrice * (1 + deltaPct));
+          return { ...a, currentPrice: parseFloat(newPrice.toFixed(2)) };
+        }));
+        setLastRefreshedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (Simulated)');
+        showToast('Simulated market quotes updated!');
+      };
+
+      // Save/Edit Asset
+      const handleSaveAsset = (assetData) => {
+        if (editingAsset) {
+          setAssets(prev => prev.map(a => a.id === editingAsset.id ? { ...assetData, id: editingAsset.id } : a));
+          showToast(`Updated "${assetData.ticker || assetData.name}"`);
+        } else {
+          const newAsset = { ...assetData, id: 'ast_' + Date.now() };
+          setAssets(prev => [newAsset, ...prev]);
+          showToast(`Added "${newAsset.ticker || newAsset.name}" to portfolio`);
+        }
+        setIsAddAssetModalOpen(false);
+        setEditingAsset(null);
+      };
+
+      const handleDeleteAsset = (id) => {
+        if (window.confirm('Are you sure you want to delete this asset from your portfolio?')) {
+          setAssets(prev => prev.filter(a => a.id !== id));
+          showToast('Asset removed');
+        }
+      };
+
+      // Backup: Export JSON
+      const handleExportBackup = () => {
+        const backupPayload = {
+          app: 'finvest_investments',
+          version: '1.0.0',
+          exportedAt: new Date().toISOString(),
+          data: {
+            assets,
+            finnhubKey
+          }
+        };
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
+        const downloadAnchor = document.createElement('a');
+        const fileName = `finvest-investments-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast('Portfolio exported to JSON');
+      };
+
+      // Backup: Import JSON
+      const handleImportBackup = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed || parsed.app !== 'finvest_investments' || !parsed.data) {
+              alert('Invalid backup file. The uploaded file does not match the FinVest Investments schema.');
+              return;
+            }
+
+            if (Array.isArray(parsed.data.assets)) {
+              setAssets(parsed.data.assets);
+            }
+            if (typeof parsed.data.finnhubKey === 'string') {
+              setFinnhubKey(parsed.data.finnhubKey);
+            }
+            showToast('Portfolio successfully restored from backup!');
+            setIsBackupModalOpen(false);
+          } catch (err) {
+            alert('Failed to parse JSON file: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const handleResetDemoData = () => {
+        if (window.confirm('Reset portfolio to sample demo holdings? Custom edits will be replaced.')) {
+          setAssets(SEED_ASSETS);
+          showToast('Reset to demo holdings completed');
+          setIsBackupModalOpen(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+          
+          {/* TOAST ALERT NOTIFICATION */}
+          {toast && (
+            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl shadow-2xl border border-slate-700/50 dark:border-slate-200/50 text-sm font-medium animate-bounce">
+              <span className="text-emerald-400 dark:text-emerald-600 font-bold">✓</span>
+              <span>{toast}</span>
+            </div>
+          )}
+
+          {/* 1. UNIFIED SUITE TOP NAVIGATION BAR (STICKY) */}
+          <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                
+                {/* Brand Logo & Name */}
+                <div className="flex items-center gap-8">
+                  <a href="#" className="flex items-center gap-2.5 group">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+                      <Icon name="trendingUp" size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-indigo-200 dark:to-slate-200">
+                          FinVest
+                        </span>
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+                          Investments
+                        </span>
+                      </div>
+                      <span className="block text-[11px] text-slate-500 dark:text-slate-400 -mt-0.5">
+                        Treemap & Live Quotes
+                      </span>
+                    </div>
+                  </a>
+
+                  {/* Desktop Suite Links */}
+                  <nav className="hidden md:flex items-center space-x-1">
+                    {suiteApps.map((app) => (
+                      <a
+                        key={app.name}
+                        href={app.url}
+                        title={app.desc}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                          app.active
+                            ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 shadow-sm border border-indigo-200/50 dark:border-indigo-800/60'
+                            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        }`}
+                      >
+                        {app.name}
+                        {app.active && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse"></span>
+                        )}
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+
+                {/* Right Action Controls: Finnhub API Key, Backup, Theme, Mobile Nav */}
+                <div className="flex items-center gap-2.5">
+                  {/* Finnhub API Key Setup Trigger */}
+                  <button
+                    onClick={() => setIsApiKeyModalOpen(true)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                      finnhubKey
+                        ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                        : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                    }`}
+                    title="Configure Finnhub API Key for Real-time Quotes"
+                  >
+                    <Icon name="key" size={13} />
+                    <span className="hidden sm:inline">{finnhubKey ? 'Finnhub Connected' : 'Connect Finnhub'}</span>
+                  </button>
+
+                  {/* Data Backup Modal Trigger */}
+                  <button
+                    onClick={() => setIsBackupModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition"
+                    title="Export or Import JSON Data"
+                  >
+                    <Icon name="database" size={14} className="text-slate-500 dark:text-slate-400" />
+                    <span className="hidden sm:inline">Backup & Data</span>
+                  </button>
+
+                  {/* Theme Mode Toggle */}
+                  <button
+                    onClick={toggleTheme}
+                    className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    aria-label="Toggle Dark/Light Mode"
+                  >
+                    {theme === 'dark' ? (
+                      <Icon name="sun" size={18} className="text-amber-400" />
+                    ) : (
+                      <Icon name="moon" size={18} className="text-slate-700" />
+                    )}
+                  </button>
+
+                  {/* Mobile Navigation Menu Toggle */}
+                  <button
+                    onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                    className="p-2 md:hidden rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Icon name={isMobileNavOpen ? "x" : "menu"} size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Navigation Drawer */}
+            {isMobileNavOpen && (
+              <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 space-y-1">
+                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">
+                  FinVest Suite Apps
+                </div>
+                {suiteApps.map((app) => (
+                  <a
+                    key={app.name}
+                    href={app.url}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium ${
+                      app.active
+                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-semibold'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>{app.name}</span>
+                    <span className="text-xs text-slate-400">{app.desc}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </header>
+
+          {/* MAIN PORTFOLIO DASHBOARD */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            
+            {/* TOP BAR: Title, Live Refresh Action, Add Asset */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/70 dark:border-slate-800">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  Investment Portfolio
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  Point-in-time asset valuations, interactive heatmaps, and live market quotes.
+                </p>
+              </div>
+
+              <div className="flex items-center flex-wrap gap-2.5">
+                {/* Live Quotes Fetcher Button */}
+                <button
+                  onClick={handleFetchLiveQuotes}
+                  disabled={isFetchingQuotes}
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-xs transition flex items-center gap-1.5 ${
+                    isFetchingQuotes ? 'opacity-60 cursor-not-allowed' : ''
+                  }`}
+                  title="Query Finnhub for real-time market prices"
+                >
+                  <Icon name="refresh" size={14} className={isFetchingQuotes ? 'animate-spin text-indigo-500' : 'text-slate-400'} />
+                  <span>{fetchProgress || 'Fetch Live Quotes'}</span>
+                </button>
+
+                {/* Simulate Market Button (when no API key or offline) */}
+                <button
+                  onClick={handleSimulateMarketChange}
+                  className="px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-xs transition"
+                  title="Simulate random market price tick"
+                >
+                  Simulate Tick
+                </button>
+
+                {/* Primary Action: Add Asset */}
+                <button
+                  onClick={() => {
+                    setEditingAsset(null);
+                    setIsAddAssetModalOpen(true);
+                  }}
+                  className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center gap-1.5"
+                >
+                  <Icon name="plus" size={16} />
+                  <span>Add Asset</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. SUMMARY METRICS CARDS (4-GRID) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Total Portfolio Value */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Total Portfolio Value
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <Icon name="dollarSign" size={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white num-tabular">
+                    {formatCurrency(portfolioTotals.totalValue)}
+                  </div>
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <span>Last updated: {lastRefreshedAt}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Unrealized Gain / Loss */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Total Unrealized Return
+                  </span>
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    portfolioTotals.totalGainDollar >= 0
+                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
+                  }`}>
+                    <Icon name={portfolioTotals.totalGainDollar >= 0 ? "trendingUp" : "trendingDown"} size={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className={`text-2xl sm:text-3xl font-extrabold tracking-tight num-tabular ${
+                    portfolioTotals.totalGainDollar >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                  }`}>
+                    {portfolioTotals.totalGainDollar >= 0 ? '+' : ''}{formatCurrency(portfolioTotals.totalGainDollar)}
+                  </div>
+                  <div className="mt-1 flex items-center gap-1.5 text-xs font-bold num-tabular">
+                    <span className={portfolioTotals.totalGainDollar >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                      {portfolioTotals.totalGainDollar >= 0 ? '+' : ''}{portfolioTotals.totalGainPercent.toFixed(2)}%
+                    </span>
+                    <span className="text-slate-400 font-normal">all-time change</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Cost Basis */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Total Cost Basis
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+                    <Icon name="database" size={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white num-tabular">
+                    {formatCurrency(portfolioTotals.totalCost)}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Across {assets.length} active holdings
+                  </div>
+                </div>
+              </div>
+
+              {/* Asset Allocation Split */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Allocation Split
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <Icon name="layers" size={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  {/* Allocation Visual Bar */}
+                  <div className="w-full h-3 rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800 mt-1">
+                    <div style={{ width: `${portfolioTotals.stocksPct}%` }} className="bg-indigo-600" title={`Stocks: ${portfolioTotals.stocksPct.toFixed(1)}%`}></div>
+                    <div style={{ width: `${portfolioTotals.etfsPct}%` }} className="bg-emerald-500" title={`ETFs: ${portfolioTotals.etfsPct.toFixed(1)}%`}></div>
+                    <div style={{ width: `${portfolioTotals.altPct}%` }} className="bg-amber-400" title={`Alternatives: ${portfolioTotals.altPct.toFixed(1)}%`}></div>
+                  </div>
+                  <div className="mt-2.5 flex items-center justify-between text-[11px] font-semibold">
+                    <span className="text-indigo-600 dark:text-indigo-400">Stocks {portfolioTotals.stocksPct.toFixed(0)}%</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">ETFs {portfolioTotals.etfsPct.toFixed(0)}%</span>
+                    <span className="text-amber-600 dark:text-amber-400">Alts {portfolioTotals.altPct.toFixed(0)}%</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* 3. INTERACTIVE TREEMAP VISUALIZATION */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+              
+              {/* Treemap Controls: Category Filter Tabs & Heatmap Legend */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Icon name="grid" size={18} className="text-indigo-500" />
+                    Portfolio Treemap Heatmap
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Rectangles sized by current market value; colored dynamically by % return vs. cost basis.
+                  </p>
+                </div>
+
+                <div className="flex items-center flex-wrap gap-3">
+                  {/* Category Filter Tabs */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
+                    <button
+                      onClick={() => setTreemapFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg transition ${
+                        treemapFilter === 'all'
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      All ({enrichedAssets.length})
+                    </button>
+                    <button
+                      onClick={() => setTreemapFilter('stock')}
+                      className={`px-3 py-1.5 rounded-lg transition ${
+                        treemapFilter === 'stock'
+                          ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      Stocks
+                    </button>
+                    <button
+                      onClick={() => setTreemapFilter('etf')}
+                      className={`px-3 py-1.5 rounded-lg transition ${
+                        treemapFilter === 'etf'
+                          ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      ETFs
+                    </button>
+                    <button
+                      onClick={() => setTreemapFilter('alternative')}
+                      className={`px-3 py-1.5 rounded-lg transition ${
+                        treemapFilter === 'alternative'
+                          ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      Alternatives
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Heatmap Legend */}
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 px-1 pt-1 border-t border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+                <span>Color scale:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-xs bg-[#9f1239]"></span> -25%+</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-xs bg-[#e11d48]"></span> -10%</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-xs bg-[#f87171]"></span> 0%</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-xs bg-[#34d399]"></span> +10%</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-xs bg-[#10b981]"></span> +20%</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-xs bg-[#047857]"></span> +40%+</span>
+                </div>
+              </div>
+
+              {/* Treemap Render Box */}
+              <div className="relative w-full h-[400px] sm:h-[480px] bg-slate-900 rounded-xl overflow-hidden shadow-inner border border-slate-800">
+                {treemapRectangles.length === 0 ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 text-sm">
+                    <Icon name="grid" size={32} className="mb-2 opacity-40" />
+                    <span>No assets found matching current filter.</span>
+                  </div>
+                ) : (
+                  treemapRectangles.map((item) => {
+                    const colors = getReturnColor(item.unrealizedPercent);
+                    const isPositive = item.unrealizedPercent >= 0;
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => {
+                          setEditingAsset(item);
+                          setIsAddAssetModalOpen(true);
+                        }}
+                        onMouseEnter={() => setHoveredTreemapItem(item)}
+                        onMouseLeave={() => setHoveredTreemapItem(null)}
+                        style={{
+                          left: `${(item.x / 1000) * 100}%`,
+                          top: `${(item.y / 520) * 100}%`,
+                          width: `${(item.w / 1000) * 100}%`,
+                          height: `${(item.h / 520) * 100}%`,
+                          backgroundColor: colors.bg,
+                          borderColor: colors.border
+                        }}
+                        className="absolute p-2 border border-slate-950/40 cursor-pointer overflow-hidden transition-all duration-150 hover:brightness-110 hover:z-20 flex flex-col justify-between group select-none"
+                      >
+                        <div>
+                          <div className="font-extrabold text-white text-xs sm:text-sm tracking-tight drop-shadow-xs truncate">
+                            {item.ticker || item.name}
+                          </div>
+                          <div className="text-[10px] text-white/80 font-medium truncate hidden sm:block">
+                            {item.name}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="font-bold text-white text-[11px] sm:text-xs num-tabular drop-shadow-xs">
+                            {formatCompactCurrency(item.currentValue)}
+                          </div>
+                          <div className="text-[10px] sm:text-[11px] font-extrabold text-white/90 num-tabular flex items-center gap-0.5">
+                            {isPositive ? '+' : ''}{item.unrealizedPercent.toFixed(1)}%
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+
+                {/* Hover Details Card (Overlay) */}
+                {hoveredTreemapItem && (
+                  <div className="absolute bottom-3 left-3 z-30 bg-slate-950/90 text-white backdrop-blur-md p-3.5 rounded-xl border border-slate-700/80 shadow-2xl text-xs space-y-1 pointer-events-none max-w-xs animate-fadeIn">
+                    <div className="flex items-center justify-between gap-4 font-bold text-sm">
+                      <span>{hoveredTreemapItem.ticker || hoveredTreemapItem.name}</span>
+                      <span className="uppercase text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                        {hoveredTreemapItem.category}
+                      </span>
+                    </div>
+                    <div className="text-slate-300 text-[11px]">{hoveredTreemapItem.name}</div>
+                    <div className="pt-1.5 border-t border-slate-800/80 grid grid-cols-2 gap-x-4 gap-y-1 num-tabular">
+                      <span className="text-slate-400">Units / Shares:</span>
+                      <span className="text-right font-medium">{hoveredTreemapItem.quantity}</span>
+                      
+                      <span className="text-slate-400">Current Price:</span>
+                      <span className="text-right font-medium">{formatCurrency(hoveredTreemapItem.currentPrice)}</span>
+                      
+                      <span className="text-slate-400">Cost Basis:</span>
+                      <span className="text-right font-medium">{formatCurrency(hoveredTreemapItem.costBasis)}</span>
+                      
+                      <span className="text-slate-400">Total Value:</span>
+                      <span className="text-right font-bold text-white">{formatCurrency(hoveredTreemapItem.currentValue)}</span>
+                      
+                      <span className="text-slate-400">Unrealized P&L:</span>
+                      <span className={`text-right font-bold ${hoveredTreemapItem.unrealizedDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {hoveredTreemapItem.unrealizedDollar >= 0 ? '+' : ''}{formatCurrency(hoveredTreemapItem.unrealizedDollar)} ({hoveredTreemapItem.unrealizedPercent.toFixed(1)}%)
+                      </span>
+                    </div>
+                    <div className="pt-1 text-[10px] text-slate-400 italic">Click tile to edit or update</div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* 4. ASSET HOLDINGS DATA TABLE */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+              
+              {/* Table Controls Header */}
+              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Icon name="layers" size={18} className="text-indigo-500" />
+                    Holdings Ledger
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Individual portfolio positions, cost bases, and unrealized returns.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  {/* Search Bar */}
+                  <div className="relative min-w-[200px]">
+                    <Icon name="search" size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search ticker, name, notes..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <Icon name="x" size={13} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Filter */}
+                  <select
+                    value={tableCategoryFilter}
+                    onChange={(e) => setTableCategoryFilter(e.target.value)}
+                    className="px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="all">All Categories</option>
+                    <option value="stock">Stocks Only</option>
+                    <option value="etf">ETFs Only</option>
+                    <option value="alternative">Alternative Assets</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Holdings Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      <th className="py-3 px-4 sm:px-6">Asset / Ticker</th>
+                      <th className="py-3 px-4 sm:px-6">Category</th>
+                      <th className="py-3 px-4 sm:px-6 text-right">Quantity</th>
+                      <th className="py-3 px-4 sm:px-6 text-right">Cost Basis</th>
+                      <th className="py-3 px-4 sm:px-6 text-right">Current Price</th>
+                      <th className="py-3 px-4 sm:px-6 text-right">Total Value</th>
+                      <th className="py-3 px-4 sm:px-6 text-right">Unrealized P&L</th>
+                      <th className="py-3 px-4 sm:px-6 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
+                    {filteredTableAssets.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" className="py-12 text-center text-slate-400">
+                          <Icon name="search" size={28} className="mx-auto mb-2 opacity-40" />
+                          <p className="font-medium text-sm">No assets match your search criteria.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTableAssets.map((asset) => {
+                        const isGain = asset.unrealizedDollar >= 0;
+                        return (
+                          <tr
+                            key={asset.id}
+                            className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition group"
+                          >
+                            {/* Asset Ticker & Name */}
+                            <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-slate-900 dark:text-white text-sm">
+                                  {asset.ticker || '—'}
+                                </span>
+                                <span className="text-slate-600 dark:text-slate-400 font-medium">
+                                  {asset.name}
+                                </span>
+                              </div>
+                              {asset.notes && (
+                                <div className="text-[11px] text-slate-400 truncate mt-0.5 max-w-xs">
+                                  {asset.notes}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Category Badge */}
+                            <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                asset.category === 'stock'
+                                  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400'
+                                  : asset.category === 'etf'
+                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
+                                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                              }`}>
+                                {asset.category}
+                              </span>
+                            </td>
+
+                            {/* Quantity */}
+                            <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap font-medium num-tabular">
+                              {asset.quantity}
+                            </td>
+
+                            {/* Cost Basis */}
+                            <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap font-medium text-slate-500 dark:text-slate-400 num-tabular">
+                              {formatCurrency(asset.costBasis)}
+                            </td>
+
+                            {/* Current Price */}
+                            <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap font-semibold text-slate-900 dark:text-white num-tabular">
+                              {formatCurrency(asset.currentPrice)}
+                            </td>
+
+                            {/* Total Value */}
+                            <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap font-bold text-slate-900 dark:text-white num-tabular">
+                              {formatCurrency(asset.currentValue)}
+                            </td>
+
+                            {/* Unrealized Return */}
+                            <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap num-tabular">
+                              <span className={`font-bold inline-flex items-center gap-1 ${
+                                isGain ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                              }`}>
+                                {isGain ? '+' : ''}{formatCurrency(asset.unrealizedDollar)}
+                              </span>
+                              <div className={`text-[11px] font-bold ${
+                                isGain ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                              }`}>
+                                ({isGain ? '+' : ''}{asset.unrealizedPercent.toFixed(1)}%)
+                              </div>
+                            </td>
+
+                            {/* Row Action Buttons */}
+                            <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 transition">
+                                <button
+                                  onClick={() => {
+                                    setEditingAsset(asset);
+                                    setIsAddAssetModalOpen(true);
+                                  }}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition"
+                                  title="Edit Asset"
+                                >
+                                  <Icon name="edit" size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteAsset(asset.id)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition"
+                                  title="Delete Asset"
+                                >
+                                  <Icon name="trash" size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Table Footer */}
+              <div className="p-4 sm:px-6 bg-slate-50/50 dark:bg-slate-800/20 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>Showing {filteredTableAssets.length} of {assets.length} total holdings</span>
+                <span className="font-semibold">Local Storage: finvest_investments_*</span>
+              </div>
+            </div>
+
+          </main>
+
+          {/* FOOTER */}
+          <footer className="border-t border-slate-200 dark:border-slate-800 mt-16 py-8 bg-white/50 dark:bg-slate-900/50 transition-colors">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">FinVest Suite</span>
+                <span>•</span>
+                <span>App 3 of 4: Investment Portfolio</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span>Finnhub Live Market Quotes API</span>
+                <span>•</span>
+                <span>100% Client-Side Local Storage</span>
+              </div>
+            </div>
+          </footer>
+
+          {/* ========================================================
+              MODAL 1: ADD / EDIT ASSET
+             ======================================================== */}
+          {isAddAssetModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden modal-animate">
+                
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                    {editingAsset ? 'Edit Investment Position' : 'Add Investment Asset'}
+                  </h3>
+                  <button
+                    onClick={() => { setIsAddAssetModalOpen(false); setEditingAsset(null); }}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    handleSaveAsset({
+                      category: formData.get('category'),
+                      ticker: (formData.get('ticker') || '').toUpperCase().trim(),
+                      name: formData.get('name').trim(),
+                      quantity: parseFloat(formData.get('quantity')) || 0,
+                      costBasis: parseFloat(formData.get('costBasis')) || 0,
+                      currentPrice: parseFloat(formData.get('currentPrice')) || 0,
+                      notes: formData.get('notes')
+                    });
+                  }}
+                  className="p-5 space-y-4"
+                >
+                  {/* Category Selector */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                      Asset Category *
+                    </label>
+                    <div className="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold text-center">
+                      <label className="cursor-pointer">
+                        <input
+                          type="radio"
+                          name="category"
+                          value="stock"
+                          defaultChecked={editingAsset ? editingAsset.category === 'stock' : true}
+                          className="sr-only peer"
+                        />
+                        <div className="py-2 rounded-lg peer-checked:bg-indigo-600 peer-checked:text-white text-slate-600 dark:text-slate-300 transition">
+                          Stock
+                        </div>
+                      </label>
+                      <label className="cursor-pointer">
+                        <input
+                          type="radio"
+                          name="category"
+                          value="etf"
+                          defaultChecked={editingAsset ? editingAsset.category === 'etf' : false}
+                          className="sr-only peer"
+                        />
+                        <div className="py-2 rounded-lg peer-checked:bg-emerald-600 peer-checked:text-white text-slate-600 dark:text-slate-300 transition">
+                          ETF
+                        </div>
+                      </label>
+                      <label className="cursor-pointer">
+                        <input
+                          type="radio"
+                          name="category"
+                          value="alternative"
+                          defaultChecked={editingAsset ? editingAsset.category === 'alternative' : false}
+                          className="sr-only peer"
+                        />
+                        <div className="py-2 rounded-lg peer-checked:bg-amber-600 peer-checked:text-white text-slate-600 dark:text-slate-300 transition">
+                          Alternative
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Ticker & Name */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Ticker Symbol
+                      </label>
+                      <input
+                        type="text"
+                        name="ticker"
+                        placeholder="e.g. AAPL, VOO, BTC"
+                        defaultValue={editingAsset ? editingAsset.ticker : ''}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold uppercase text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Asset Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        required
+                        placeholder="e.g. Apple Inc, Real Estate"
+                        defaultValue={editingAsset ? editingAsset.name : ''}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quantity & Cost Basis */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Shares / Quantity *
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        min="0.000001"
+                        name="quantity"
+                        required
+                        placeholder="e.g. 50"
+                        defaultValue={editingAsset ? editingAsset.quantity : ''}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Cost Basis ($/share) *
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        min="0"
+                        name="costBasis"
+                        required
+                        placeholder="e.g. 150.00"
+                        defaultValue={editingAsset ? editingAsset.costBasis : ''}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Current Price */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Current Price per Unit ($) *
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      name="currentPrice"
+                      required
+                      placeholder="e.g. 175.50 (Auto-refreshed via Finnhub for stocks)"
+                      defaultValue={editingAsset ? editingAsset.currentPrice : ''}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Note: Finnhub API automatically updates Stocks & ETFs when live quotes are fetched.
+                    </p>
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      name="notes"
+                      rows="2"
+                      placeholder="Investment thesis, dividend schedule, storage vault..."
+                      defaultValue={editingAsset ? editingAsset.notes : ''}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    ></textarea>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="pt-2 flex items-center justify-end gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => { setIsAddAssetModalOpen(false); setEditingAsset(null); }}
+                      className="px-4 py-2 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition"
+                    >
+                      {editingAsset ? 'Save Changes' : 'Record Asset'}
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================
+              MODAL 2: FINNHUB API KEY SETTINGS
+             ======================================================== */}
+          {isApiKeyModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden modal-animate">
+                
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    <Icon name="key" size={18} className="text-emerald-500" />
+                    Finnhub API Integration
+                  </h3>
+                  <button
+                    onClick={() => setIsApiKeyModalOpen(false)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                </div>
+
+                <div className="p-5 space-y-4">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Connect your free Finnhub account to stream real-time price quotes for all US Stocks and ETFs directly into your browser. Your API key is stored <strong>locally only</strong> in your browser's <code className="text-indigo-500">localStorage</code>.
+                  </p>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Finnhub API Token
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. c123456789abcdef..."
+                      value={finnhubKey}
+                      onChange={(e) => setFinnhubKey(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-xl text-xs text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
+                    <div>
+                      <div className="font-bold">Need a free Finnhub API Key?</div>
+                      <div className="text-[11px] text-emerald-700 dark:text-emerald-300">Takes 30 seconds to sign up for free tier.</div>
+                    </div>
+                    <a
+                      href="https://finnhub.io/dashboard"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1 shadow-xs"
+                    >
+                      <span>Get Free Key</span>
+                      <Icon name="externalLink" size={12} />
+                    </a>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setIsApiKeyModalOpen(false)}
+                      className="px-4 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition"
+                    >
+                      Save Key
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================
+              MODAL 3: DATA BACKUP (EXPORT / IMPORT JSON)
+             ======================================================== */}
+          {isBackupModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden modal-animate">
+                
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                      <Icon name="database" size={18} className="text-indigo-500" />
+                      Portfolio Backup & Portability
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Your holdings live exclusively in browser <code className="text-indigo-500">localStorage</code>.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsBackupModalOpen(false)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  
+                  <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs text-indigo-950 dark:text-indigo-200 flex items-start gap-2.5">
+                    <Icon name="shieldCheck" size={16} className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold">Local-First Storage:</span> Saved under key prefix <code className="font-mono text-indigo-600 dark:text-indigo-300">finvest_investments_*</code>.
+                    </div>
+                  </div>
+
+                  {/* Export Section */}
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 dark:text-white">Export Portfolio to JSON</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Download all {assets.length} holdings, quantities, and cost bases.
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleExportBackup}
+                      className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1.5 transition"
+                    >
+                      <Icon name="download" size={14} />
+                      <span>Export JSON</span>
+                    </button>
+                  </div>
+
+                  {/* Import Section */}
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 dark:text-white">Import from JSON</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Restore positions from a previously exported backup file.
+                      </div>
+                    </div>
+                    <label className="cursor-pointer px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm flex items-center gap-1.5 transition">
+                      <Icon name="upload" size={14} />
+                      <span>Import File</span>
+                      <input
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={handleImportBackup}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Reset Demo Data */}
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-xs text-slate-500">Need to reload sample demo holdings?</span>
+                    <button
+                      onClick={handleResetDemoData}
+                      className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center gap-1"
+                    >
+                      <Icon name="refresh" size={13} />
+                      <span>Load Sample Holdings</span>
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // Mount with React 18 createRoot
+    const rootEl = document.getElementById('root');
+    if (ReactDOM.createRoot) {
+      ReactDOM.createRoot(rootEl).render(<App />);
+    } else {
+      ReactDOM.render(<App />, rootEl);
+    }
+  </script>
+</body>
+</html>

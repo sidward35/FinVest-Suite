@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinVest Retirement | Monte Carlo Simulation & Longevity Planner</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏖️</text></svg>">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+              950: '#1e1b4b',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Google Font: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: rgba(75, 85, 99, 0.5);
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: rgba(75, 85, 99, 0.8);
+    }
+
+    .num-tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.97) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-animate {
+      animation: modalFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+
+  <!-- React 18, ReactDOM, and Babel Standalone (cdnjs Cloudflare CDN - No crossorigin to prevent file:// protocol CORS issues) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js"></script>
+
+  <!-- Secondary CDN Fallbacks -->
+  <script>
+    if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>');
+  </script>
+  <script>
+    if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>');
+  </script>
+  <script>
+    if (!window.Babel) document.write('<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>');
+  </script>
+
+  <!-- Error Catcher to prevent blank screen without visible feedback -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('App runtime error:', e);
+      var root = document.getElementById('root');
+      if (root && (!root.children.length || root.querySelector('#app-loader'))) {
+        root.innerHTML = '<div style="padding: 24px; font-family: sans-serif; color: #e11d48; background: #fff1f2; border: 1px solid #fda4af; border-radius: 12px; margin: 32px max(16px, calc((100% - 600px)/2));">' +
+          '<h2 style="margin: 0 0 8px; font-size: 18px; font-weight: 700;">⚠️ Application Initialization Error</h2>' +
+          '<p style="margin: 0; font-size: 14px; color: #4b5563;">' + (e.message || 'Script error occurred') + '</p>' +
+          '<p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Source: ' + (e.filename || '') + ' line ' + (e.lineno || '') + '</p>' +
+        '</div>';
+      }
+    });
+  </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-200">
+  <div id="root" class="min-h-full flex flex-col">
+    <div id="app-loader" class="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-500 text-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <span>Loading FinVest Retirement Simulator...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- React Application Script -->
+  <script type="text/babel" data-presets="react,env">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // --- ICON SYSTEM (Lucide-style Clean SVGs - All multi-elements wrapped in React Fragments) ---
+    const Icon = ({ name, size = 18, className = "" }) => {
+      const icons = {
+        sunUmbrella: <><path d="M12 2v20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><path d="M4 12a8 8 0 0 1 16 0z" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M4 12c2.5-1 5.5-1 8 0 2.5-1 5.5-1 8 0" fill="none" stroke="currentColor" strokeWidth="2" /></>,
+        trendingUp: <path d="M22 7 13.5 15.5 8.5 10.5 2 17M16 7h6v6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        trendingDown: <path d="m22 17-8.5-8.5-5 5L2 7M16 17h6v-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        dollarSign: <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        pieChart: <><path d="M21.21 15.89A10 10 0 1 1 8 2.83" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><path d="M22 12A10 10 0 0 0 12 2v10z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>,
+        barChart: <path d="M12 20V10M18 20V4M6 20v-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        sun: <><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></>,
+        moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        upload: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        database: <><ellipse cx="12" cy="5" rx="9" ry="3" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5M3 12c0 1.66 4 3 9 3s9-1.34 9-3" fill="none" stroke="currentColor" strokeWidth="2" /></>,
+        shieldCheck: <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.8 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        refresh: <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16M16 16h5v5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        x: <path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        menu: <path d="M4 12h16M4 6h16M4 18h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        info: <><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 16v-4M12 8h.01" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></>,
+        clock: <><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" /><polyline points="12 6 12 12 16 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>,
+        sliders: <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        checkCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="22 4 12 14.01 9 11.01" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>,
+        zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      };
+
+      return (
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          className={`inline-block shrink-0 ${className}`}
+        >
+          {icons[name] || icons.sunUmbrella}
+        </svg>
+      );
+    };
+
+    // --- CURRENCY & NUMBER FORMATTERS ---
+    const formatCurrency = (num) => {
+      if (num >= 1000000) {
+        return `$${(num / 1000000).toFixed(2)}M`;
+      }
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(num || 0);
+    };
+
+    const formatFullCurrency = (num) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(num || 0);
+    };
+
+    // --- MONTE CARLO RANDOM NORMAL GENERATOR (Box-Muller) ---
+    const randomNormal = (mean, stdDev) => {
+      let u1 = 0, u2 = 0;
+      while (u1 === 0) u1 = Math.random();
+      while (u2 === 0) u2 = Math.random();
+      const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+      return mean + z0 * stdDev;
+    };
+
+    // --- DEFAULT RETIREMENT PROFILES & PRESETS ---
+    const DEFAULT_PROFILE = {
+      currentAge: 32,
+      retirementAge: 62,
+      lifeExpectancy: 92,
+      currentBalance: 285000,
+      annualSavings: 24000,
+      savingsGrowthRate: 3.0,     // % wage/savings growth
+      retirementAnnualExpenses: 72000,
+      inflationRate: 2.5,         // % expected inflation
+      stocksPct: 75,
+      bondsPct: 20,
+      cashPct: 5,
+      // Market parameters
+      stocksMean: 9.8,
+      stocksStd: 16.5,
+      bondsMean: 4.8,
+      bondsStd: 6.5,
+      cashMean: 2.8,
+      cashStd: 1.2
+    };
+
+    const PRESETS = [
+      {
+        name: 'FIRE (Aggressive Early)',
+        badge: '🚀 FIRE',
+        desc: 'Retire at 45 with aggressive 85% equities',
+        data: {
+          currentAge: 28,
+          retirementAge: 45,
+          lifeExpectancy: 92,
+          currentBalance: 190000,
+          annualSavings: 42000,
+          savingsGrowthRate: 3.5,
+          retirementAnnualExpenses: 65000,
+          inflationRate: 2.5,
+          stocksPct: 85,
+          bondsPct: 10,
+          cashPct: 5
+        }
+      },
+      {
+        name: 'Standard Balanced (Age 62)',
+        badge: '⚖️ Classic',
+        desc: 'Traditional 75/20/5 wealth accumulation',
+        data: { ...DEFAULT_PROFILE }
+      },
+      {
+        name: 'Conservative Wealth Preservation',
+        badge: '🛡️ Low Risk',
+        desc: 'Higher bond allocation for peace of mind',
+        data: {
+          currentAge: 45,
+          retirementAge: 65,
+          lifeExpectancy: 95,
+          currentBalance: 520000,
+          annualSavings: 28000,
+          savingsGrowthRate: 2.0,
+          retirementAnnualExpenses: 80000,
+          inflationRate: 2.8,
+          stocksPct: 50,
+          bondsPct: 40,
+          cashPct: 10
+        }
+      }
+    ];
+
+    // --- MAIN REACT APPLICATION ---
+    function App() {
+      // 1. Theme State (synchronized with finvest_theme)
+      const [theme, setTheme] = useState(() => {
+        const saved = localStorage.getItem('finvest_theme');
+        if (saved) return saved;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      });
+
+      useEffect(() => {
+        const root = document.documentElement;
+        if (theme === 'dark') {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+        localStorage.setItem('finvest_theme', theme);
+      }, [theme]);
+
+      const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+      };
+
+      // 2. State & Storage (finvest_retirement_*)
+      const [profile, setProfile] = useState(() => {
+        try {
+          const raw = localStorage.getItem('finvest_retirement_profile');
+          return raw ? { ...DEFAULT_PROFILE, ...JSON.parse(raw) } : DEFAULT_PROFILE;
+        } catch (e) {
+          return DEFAULT_PROFILE;
+        }
+      });
+
+      useEffect(() => {
+        localStorage.setItem('finvest_retirement_profile', JSON.stringify(profile));
+      }, [profile]);
+
+      // Navigation Suite Links
+      const suiteApps = [
+        { name: 'Budget', url: 'https://budget.yourdomain.com', active: false, desc: 'Cashflow & Expenses' },
+        { name: 'Retirement', url: 'https://retirement.yourdomain.com', active: true, desc: 'FIRE & Simulation' },
+        { name: 'Investments', url: 'https://investments.yourdomain.com', active: false, desc: 'Holdings & Dividends' },
+        { name: 'Net Worth', url: 'https://networth.yourdomain.com', active: false, desc: 'Assets & Liabilities' },
+      ];
+
+      // UI States
+      const [activeTab, setActiveTab] = useState('montecarlo'); // 'montecarlo' | 'longevity' | 'assumptions'
+      const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+      const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+      const [toast, setToast] = useState(null);
+      const [activeHoverPoint, setActiveHoverPoint] = useState(null);
+
+      // Custom Longevity test slider state
+      const [customWithdrawalRate, setCustomWithdrawalRate] = useState(4.0);
+
+      const showToast = (message) => {
+        setToast(message);
+        setTimeout(() => setToast(null), 3500);
+      };
+
+      // Update Profile Fields
+      const updateField = (field, value) => {
+        setProfile(prev => ({
+          ...prev,
+          [field]: typeof value === 'number' ? value : parseFloat(value) || 0
+        }));
+      };
+
+      // Asset Allocation Sync (Ensures 100% total)
+      const handleAllocationChange = (type, val) => {
+        const numVal = Math.min(100, Math.max(0, parseInt(val) || 0));
+        setProfile(prev => {
+          if (type === 'stocks') {
+            const remainder = 100 - numVal;
+            const bondRatio = prev.bondsPct + prev.cashPct > 0 ? prev.bondsPct / (prev.bondsPct + prev.cashPct) : 0.8;
+            const newBonds = Math.round(remainder * bondRatio);
+            const newCash = remainder - newBonds;
+            return { ...prev, stocksPct: numVal, bondsPct: newBonds, cashPct: newCash };
+          } else if (type === 'bonds') {
+            const remainder = 100 - numVal;
+            const stockRatio = prev.stocksPct + prev.cashPct > 0 ? prev.stocksPct / (prev.stocksPct + prev.cashPct) : 0.9;
+            const newStocks = Math.round(remainder * stockRatio);
+            const newCash = remainder - newStocks;
+            return { ...prev, stocksPct: newStocks, bondsPct: numVal, cashPct: newCash };
+          } else {
+            const remainder = 100 - numVal;
+            const stockRatio = prev.stocksPct + prev.bondsPct > 0 ? prev.stocksPct / (prev.stocksPct + prev.bondsPct) : 0.8;
+            const newStocks = Math.round(remainder * stockRatio);
+            const newBonds = remainder - newStocks;
+            return { ...prev, stocksPct: newStocks, bondsPct: newBonds, cashPct: numVal };
+          }
+        });
+      };
+
+      // --- BLENDED PORTFOLIO STATS ---
+      const portfolioStats = useMemo(() => {
+        const ws = profile.stocksPct / 100;
+        const wb = profile.bondsPct / 100;
+        const wc = profile.cashPct / 100;
+
+        const meanNominal = (ws * profile.stocksMean) + (wb * profile.bondsMean) + (wc * profile.cashMean);
+        // Portfolio StDev with stock-bond correlation ~ 0.15
+        const varStocks = Math.pow(ws * profile.stocksStd, 2);
+        const varBonds = Math.pow(wb * profile.bondsStd, 2);
+        const varCash = Math.pow(wc * profile.cashStd, 2);
+        const covSB = 2 * ws * wb * profile.stocksStd * profile.bondsStd * 0.15;
+        const stdDev = Math.sqrt(varStocks + varBonds + varCash + covSB);
+
+        const realMean = meanNominal - profile.inflationRate;
+
+        return {
+          meanNominal,
+          stdDev,
+          realMean
+        };
+      }, [profile]);
+
+      // --- MONTE CARLO SIMULATION ENGINE (500 Paths) ---
+      const simulationResults = useMemo(() => {
+        const NUM_SIMULATIONS = 500;
+        const totalYears = profile.lifeExpectancy - profile.currentAge;
+        if (totalYears <= 0) return { trajectory: [], successRate: 0, medianRetirementBalance: 0 };
+
+        const allPaths = []; // [simIndex][yearIndex]
+        let successfulRuns = 0;
+
+        // Portfolio expected nominal & std dev
+        const meanReturn = portfolioStats.meanNominal / 100;
+        const stdReturn = portfolioStats.stdDev / 100;
+        const inflation = profile.inflationRate / 100;
+        const wageGrowth = profile.savingsGrowthRate / 100;
+
+        for (let sim = 0; sim < NUM_SIMULATIONS; sim++) {
+          const path = [];
+          let currentBalance = profile.currentBalance;
+          let ranOutOfMoney = false;
+
+          for (let yr = 0; yr <= totalYears; yr++) {
+            const age = profile.currentAge + yr;
+
+            if (yr === 0) {
+              path.push({ age, balance: currentBalance });
+              continue;
+            }
+
+            // Market return for this specific year in this path
+            const annualReturn = randomNormal(meanReturn, stdReturn);
+
+            if (age <= profile.retirementAge) {
+              // Accumulation Phase: Add growing savings contributions
+              const savingsThisYear = profile.annualSavings * Math.pow(1 + wageGrowth, yr - 1);
+              currentBalance = (currentBalance + savingsThisYear) * (1 + annualReturn);
+            } else {
+              // Decumulation Phase: Withdraw inflation-adjusted retirement expenses
+              const yearsIntoRetirement = age - profile.retirementAge;
+              const expensesThisYear = profile.retirementAnnualExpenses * Math.pow(1 + inflation, yr);
+              currentBalance = (currentBalance - expensesThisYear) * (1 + annualReturn);
+
+              if (currentBalance <= 0) {
+                currentBalance = 0;
+                ranOutOfMoney = true;
+              }
+            }
+
+            path.push({ age, balance: currentBalance });
+          }
+
+          if (!ranOutOfMoney) successfulRuns++;
+          allPaths.push(path);
+        }
+
+        // Aggregate percentiles at each age step
+        const trajectory = [];
+        let medianRetirementBalance = 0;
+
+        for (let yr = 0; yr <= totalYears; yr++) {
+          const age = profile.currentAge + yr;
+          const balancesAtYr = allPaths.map(p => p[yr].balance).sort((a, b) => a - b);
+
+          const p10 = balancesAtYr[Math.floor(NUM_SIMULATIONS * 0.10)];
+          const p50 = balancesAtYr[Math.floor(NUM_SIMULATIONS * 0.50)];
+          const p90 = balancesAtYr[Math.floor(NUM_SIMULATIONS * 0.90)];
+
+          if (age === profile.retirementAge) {
+            medianRetirementBalance = p50;
+          }
+
+          trajectory.push({
+            age,
+            isRetirementYear: age === profile.retirementAge,
+            pessimistic: Math.round(p10),
+            median: Math.round(p50),
+            optimistic: Math.round(p90)
+          });
+        }
+
+        const successRate = Math.round((successfulRuns / NUM_SIMULATIONS) * 100);
+
+        return {
+          trajectory,
+          successRate,
+          medianRetirementBalance
+        };
+      }, [profile, portfolioStats]);
+
+      // --- WITHDRAWAL RATE & LONGEVITY CALCULATOR MATRIX ---
+      const longevityMatrix = useMemo(() => {
+        const rates = [3.0, 3.5, 4.0, 4.5, 5.0, 6.0];
+        const retBalance = simulationResults.medianRetirementBalance > 0
+          ? simulationResults.medianRetirementBalance
+          : profile.currentBalance * 2.5;
+
+        const realReturn = portfolioStats.realMean / 100;
+
+        return rates.map(rate => {
+          const annualWithdrawal = retBalance * (rate / 100);
+          let balance = retBalance;
+          let yearsLasted = 0;
+          const maxYears = 50;
+
+          while (balance > 0 && yearsLasted < maxYears) {
+            balance = (balance - annualWithdrawal) * (1 + realReturn);
+            if (balance > 0) {
+              yearsLasted++;
+            }
+          }
+
+          const isPerpetual = yearsLasted >= maxYears && balance > (retBalance * 0.5);
+          const depletionAge = profile.retirementAge + yearsLasted;
+
+          // Trinity benchmark success probability
+          let benchmarkSuccess = 98;
+          if (rate === 3.0) benchmarkSuccess = 100;
+          else if (rate === 3.5) benchmarkSuccess = 99;
+          else if (rate === 4.0) benchmarkSuccess = 94;
+          else if (rate === 4.5) benchmarkSuccess = 81;
+          else if (rate === 5.0) benchmarkSuccess = 65;
+          else if (rate === 6.0) benchmarkSuccess = 42;
+
+          return {
+            rate,
+            annualWithdrawal,
+            yearsLasted,
+            isPerpetual,
+            depletionAge,
+            benchmarkSuccess
+          };
+        });
+      }, [simulationResults.medianRetirementBalance, profile, portfolioStats]);
+
+      // Custom Single Withdrawal Calculation
+      const customLongevity = useMemo(() => {
+        const retBalance = simulationResults.medianRetirementBalance > 0
+          ? simulationResults.medianRetirementBalance
+          : profile.currentBalance * 2.5;
+        const rate = customWithdrawalRate;
+        const annualWithdrawal = retBalance * (rate / 100);
+        const realReturn = portfolioStats.realMean / 100;
+
+        let balance = retBalance;
+        let yearsLasted = 0;
+        while (balance > 0 && yearsLasted < 60) {
+          balance = (balance - annualWithdrawal) * (1 + realReturn);
+          if (balance > 0) yearsLasted++;
+        }
+
+        const isPerpetual = yearsLasted >= 60;
+        return {
+          annualWithdrawal,
+          yearsLasted,
+          isPerpetual,
+          depletionAge: profile.retirementAge + yearsLasted
+        };
+      }, [customWithdrawalRate, simulationResults.medianRetirementBalance, profile, portfolioStats]);
+
+      // Backup: Export JSON
+      const handleExportBackup = () => {
+        const backupPayload = {
+          app: 'finvest_retirement',
+          version: '1.0.0',
+          exportedAt: new Date().toISOString(),
+          data: {
+            profile,
+            customWithdrawalRate
+          }
+        };
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
+        const downloadAnchor = document.createElement('a');
+        const fileName = `finvest-retirement-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast('Retirement settings exported to JSON');
+      };
+
+      // Backup: Import JSON
+      const handleImportBackup = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed || parsed.app !== 'finvest_retirement' || !parsed.data) {
+              alert('Invalid backup file. The uploaded file does not match the FinVest Retirement schema.');
+              return;
+            }
+
+            if (parsed.data.profile) {
+              setProfile(parsed.data.profile);
+            }
+            if (parsed.data.customWithdrawalRate) {
+              setCustomWithdrawalRate(parsed.data.customWithdrawalRate);
+            }
+            showToast('Retirement profile successfully restored!');
+            setIsBackupModalOpen(false);
+          } catch (err) {
+            alert('Failed to parse JSON file: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const handleResetDefaults = () => {
+        if (window.confirm('Reset all retirement simulation parameters to defaults?')) {
+          setProfile(DEFAULT_PROFILE);
+          showToast('Reset to default profile');
+          setIsBackupModalOpen(false);
+        }
+      };
+
+      // Chart Calculations for SVG Rendering
+      const chartPoints = useMemo(() => {
+        const traj = simulationResults.trajectory;
+        if (!traj || traj.length === 0) return null;
+
+        const maxBalance = Math.max(...traj.map(t => t.optimistic), 100000);
+        const width = 800;
+        const height = 300;
+        const padding = { top: 20, right: 30, bottom: 40, left: 70 };
+
+        const innerWidth = width - padding.left - padding.right;
+        const innerHeight = height - padding.top - padding.bottom;
+
+        const getX = (idx) => padding.left + (idx / (traj.length - 1)) * innerWidth;
+        const getY = (val) => padding.top + innerHeight - (Math.max(0, val) / maxBalance) * innerHeight;
+
+        // Path generator for optimistic, median, pessimistic
+        let optPath = '';
+        let medPath = '';
+        let pessPath = '';
+        let areaPath = '';
+
+        traj.forEach((t, i) => {
+          const x = getX(i);
+          const yOpt = getY(t.optimistic);
+          const yMed = getY(t.median);
+          const yPess = getY(t.pessimistic);
+
+          if (i === 0) {
+            optPath += `M ${x} ${yOpt}`;
+            medPath += `M ${x} ${yMed}`;
+            pessPath += `M ${x} ${yPess}`;
+          } else {
+            optPath += ` L ${x} ${yOpt}`;
+            medPath += ` L ${x} ${yMed}`;
+            pessPath += ` L ${x} ${yPess}`;
+          }
+        });
+
+        // Confidence Cone Area (Between Optimistic & Pessimistic)
+        for (let i = 0; i < traj.length; i++) {
+          const x = getX(i);
+          const y = getY(traj[i].optimistic);
+          if (i === 0) areaPath += `M ${x} ${y}`;
+          else areaPath += ` L ${x} ${y}`;
+        }
+        for (let i = traj.length - 1; i >= 0; i--) {
+          const x = getX(i);
+          const y = getY(traj[i].pessimistic);
+          areaPath += ` L ${x} ${y}`;
+        }
+        areaPath += ' Z';
+
+        // Retirement marker line
+        const retIndex = traj.findIndex(t => t.age === profile.retirementAge);
+        const retX = retIndex !== -1 ? getX(retIndex) : null;
+
+        return {
+          width,
+          height,
+          padding,
+          maxBalance,
+          getX,
+          getY,
+          optPath,
+          medPath,
+          pessPath,
+          areaPath,
+          retX,
+          traj
+        };
+      }, [simulationResults.trajectory, profile.retirementAge]);
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+          
+          {/* TOAST ALERT NOTIFICATION */}
+          {toast && (
+            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl shadow-2xl border border-slate-700/50 dark:border-slate-200/50 text-sm font-medium animate-bounce">
+              <span className="text-emerald-400 dark:text-emerald-600 font-bold">✓</span>
+              <span>{toast}</span>
+            </div>
+          )}
+
+          {/* 1. UNIFIED SUITE TOP NAVIGATION BAR (STICKY) */}
+          <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                
+                {/* Brand Logo & Name */}
+                <div className="flex items-center gap-8">
+                  <a href="#" className="flex items-center gap-2.5 group">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                      <Icon name="sunUmbrella" size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-indigo-200 dark:to-slate-200">
+                          FinVest
+                        </span>
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">
+                          Retirement
+                        </span>
+                      </div>
+                      <span className="block text-[11px] text-slate-500 dark:text-slate-400 -mt-0.5">
+                        Monte Carlo & Longevity
+                      </span>
+                    </div>
+                  </a>
+
+                  {/* Desktop Suite Links */}
+                  <nav className="hidden md:flex items-center space-x-1">
+                    {suiteApps.map((app) => (
+                      <a
+                        key={app.name}
+                        href={app.url}
+                        title={app.desc}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                          app.active
+                            ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 shadow-sm border border-indigo-200/50 dark:border-indigo-800/60'
+                            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        }`}
+                      >
+                        {app.name}
+                        {app.active && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse"></span>
+                        )}
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+
+                {/* Right Action Controls */}
+                <div className="flex items-center gap-2.5">
+                  <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
+                    <Icon name="shieldCheck" size={13} />
+                    <span>Private & Offline</span>
+                  </div>
+
+                  {/* Data Backup Modal Trigger */}
+                  <button
+                    onClick={() => setIsBackupModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition"
+                    title="Export or Import JSON Data"
+                  >
+                    <Icon name="database" size={14} className="text-slate-500 dark:text-slate-400" />
+                    <span className="hidden sm:inline">Backup & Data</span>
+                  </button>
+
+                  {/* Theme Mode Toggle */}
+                  <button
+                    onClick={toggleTheme}
+                    className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    aria-label="Toggle Dark/Light Mode"
+                  >
+                    {theme === 'dark' ? (
+                      <Icon name="sun" size={18} className="text-amber-400" />
+                    ) : (
+                      <Icon name="moon" size={18} className="text-slate-700" />
+                    )}
+                  </button>
+
+                  {/* Mobile Navigation Menu Toggle */}
+                  <button
+                    onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                    className="p-2 md:hidden rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Icon name={isMobileNavOpen ? "x" : "menu"} size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Navigation Drawer */}
+            {isMobileNavOpen && (
+              <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 space-y-1">
+                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">
+                  FinVest Suite Apps
+                </div>
+                {suiteApps.map((app) => (
+                  <a
+                    key={app.name}
+                    href={app.url}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium ${
+                      app.active
+                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-semibold'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>{app.name}</span>
+                    <span className="text-xs text-slate-400">{app.desc}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </header>
+
+          {/* MAIN APPLICATION CONTAINER */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            
+            {/* TOP HEADER & PRESET SCENARIOS */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 border-b border-slate-200/70 dark:border-slate-800">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  Retirement Simulation & Longevity
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  Probabilistic Monte Carlo market stress-testing, asset allocation, and safe withdrawal analysis.
+                </p>
+              </div>
+
+              {/* Quick Preset Scenario Buttons */}
+              <div className="flex items-center flex-wrap gap-2">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">
+                  Presets:
+                </span>
+                {PRESETS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    onClick={() => {
+                      setProfile(prev => ({ ...prev, ...preset.data }));
+                      showToast(`Loaded "${preset.name}" preset`);
+                    }}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold shadow-xs transition flex items-center gap-1.5"
+                    title={preset.desc}
+                  >
+                    <span>{preset.badge}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* HIGH-LEVEL KPI METRIC CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* 1. Monte Carlo Success Probability */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Success Probability
+                  </span>
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    simulationResults.successRate >= 85
+                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                      : simulationResults.successRate >= 70
+                      ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
+                      : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
+                  }`}>
+                    <Icon name="shield" size={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white num-tabular">
+                      {simulationResults.successRate}%
+                    </span>
+                    <span className={`text-xs font-bold ${
+                      simulationResults.successRate >= 85 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {simulationResults.successRate >= 85 ? 'High Confidence' : simulationResults.successRate >= 70 ? 'Moderate' : 'Underfunded'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-2.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        simulationResults.successRate >= 85 ? 'bg-emerald-500' : simulationResults.successRate >= 70 ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${simulationResults.successRate}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Projected Retirement Net Worth (Median) */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Est. Balance at Age {profile.retirementAge}
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <Icon name="dollarSign" size={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white num-tabular">
+                    {formatFullCurrency(simulationResults.medianRetirementBalance)}
+                  </div>
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                    <Icon name="trendingUp" size={13} />
+                    <span>Median 50th percentile outcome</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Expected Annual Withdrawal */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Annual Living Expenses
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <Icon name="clock" size={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white num-tabular">
+                    {formatFullCurrency(profile.retirementAnnualExpenses)}<span className="text-sm font-normal text-slate-400">/yr</span>
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Adjusted for {profile.inflationRate}% annual inflation
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Real Portfolio Return */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Blended Real Return
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+                    <Icon name="zap" size={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white num-tabular">
+                    {portfolioStats.realMean.toFixed(1)}% <span className="text-xs font-normal text-slate-400">net</span>
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Nominal: {portfolioStats.meanNominal.toFixed(1)}% (σ = {portfolioStats.stdDev.toFixed(1)}%)
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* TAB SELECTOR: Monte Carlo Simulation vs. Longevity Matrix */}
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800">
+              <button
+                onClick={() => setActiveTab('montecarlo')}
+                className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+                  activeTab === 'montecarlo'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon name="trendingUp" size={16} />
+                <span>Monte Carlo Trajectory Simulation</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('longevity')}
+                className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+                  activeTab === 'longevity'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon name="barChart" size={16} />
+                <span>Withdrawal Rates & Longevity Matrix</span>
+              </button>
+            </div>
+
+            {/* MAIN TWO-COLUMN WORKSPACE: LEFT (INPUTS) & RIGHT (CHARTS / CALCULATIONS) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* LEFT COLUMN: INTUITIVE INPUTS & ALLOCATION (4 cols) */}
+              <div className="lg:col-span-4 space-y-6">
+                
+                {/* 1. Time Horizon & Ages */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Icon name="clock" size={16} className="text-indigo-500" />
+                      Age & Timeline
+                    </h2>
+                    <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full">
+                      {profile.retirementAge - profile.currentAge} yrs to retire
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Current Age
+                      </label>
+                      <input
+                        type="number"
+                        min="18"
+                        max="85"
+                        value={profile.currentAge}
+                        onChange={(e) => updateField('currentAge', parseInt(e.target.value) || 18)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Retire Age
+                      </label>
+                      <input
+                        type="number"
+                        min={profile.currentAge + 1}
+                        max="95"
+                        value={profile.retirementAge}
+                        onChange={(e) => updateField('retirementAge', parseInt(e.target.value) || 60)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        End Age
+                      </label>
+                      <input
+                        type="number"
+                        min={profile.retirementAge + 1}
+                        max="110"
+                        value={profile.lifeExpectancy}
+                        onChange={(e) => updateField('lifeExpectancy', parseInt(e.target.value) || 90)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Financial Balances & Cash Flows */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+                  <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Icon name="dollarSign" size={16} className="text-indigo-500" />
+                      Balances & Cash Flows
+                    </h2>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Current Portfolio Balance ($)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                      <input
+                        type="number"
+                        step="5000"
+                        value={profile.currentBalance}
+                        onChange={(e) => updateField('currentBalance', parseFloat(e.target.value) || 0)}
+                        className="w-full pl-7 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                        Annual Savings ($)
+                      </label>
+                      <input
+                        type="number"
+                        step="1000"
+                        value={profile.annualSavings}
+                        onChange={(e) => updateField('annualSavings', parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                        Savings Growth (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={profile.savingsGrowthRate}
+                        onChange={(e) => updateField('savingsGrowthRate', parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                        Retirement Expenses ($)
+                      </label>
+                      <input
+                        type="number"
+                        step="1000"
+                        value={profile.retirementAnnualExpenses}
+                        onChange={(e) => updateField('retirementAnnualExpenses', parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                        Inflation Rate (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={profile.inflationRate}
+                        onChange={(e) => updateField('inflationRate', parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white num-tabular focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Asset Allocation (Stock / Bond / Cash Split) */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Icon name="pieChart" size={16} className="text-indigo-500" />
+                      Asset Allocation Split
+                    </h2>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      Total: {profile.stocksPct + profile.bondsPct + profile.cashPct}%
+                    </span>
+                  </div>
+
+                  {/* Visual Allocation Bar */}
+                  <div className="w-full h-3 rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800">
+                    <div style={{ width: `${profile.stocksPct}%` }} className="bg-indigo-600" title={`Stocks: ${profile.stocksPct}%`}></div>
+                    <div style={{ width: `${profile.bondsPct}%` }} className="bg-emerald-500" title={`Bonds: ${profile.bondsPct}%`}></div>
+                    <div style={{ width: `${profile.cashPct}%` }} className="bg-amber-400" title={`Cash: ${profile.cashPct}%`}></div>
+                  </div>
+
+                  {/* Allocation Sliders */}
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                        <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span> Stocks (Equities)
+                        </span>
+                        <span className="num-tabular font-bold">{profile.stocksPct}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={profile.stocksPct}
+                        onChange={(e) => handleAllocationChange('stocks', e.target.value)}
+                        className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                        <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Bonds (Fixed Income)
+                        </span>
+                        <span className="num-tabular font-bold">{profile.bondsPct}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={profile.bondsPct}
+                        onChange={(e) => handleAllocationChange('bonds', e.target.value)}
+                        className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                        <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Cash & Equivalents
+                        </span>
+                        <span className="num-tabular font-bold">{profile.cashPct}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={profile.cashPct}
+                        onChange={(e) => handleAllocationChange('cash', e.target.value)}
+                        className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* RIGHT COLUMN: VISUALIZATIONS & OUTPUTS (8 cols) */}
+              <div className="lg:col-span-8 space-y-6">
+                
+                {/* TAB 1: MONTE CARLO SIMULATION */}
+                {activeTab === 'montecarlo' && (
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <Icon name="trendingUp" size={18} className="text-indigo-600 dark:text-indigo-400" />
+                          Probabilistic Net Worth Trajectory (500 Iterations)
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Simulates bull, bear, and historical sequence-of-returns volatility over time.
+                        </p>
+                      </div>
+
+                      {/* Legend */}
+                      <div className="flex items-center gap-4 text-xs font-medium">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                          <span className="text-slate-600 dark:text-slate-400">Optimistic (90th %)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                          <span className="text-slate-900 dark:text-slate-200 font-bold">Median (50th %)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                          <span className="text-slate-600 dark:text-slate-400">Pessimistic (10th %)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SVG Interactive Monte Carlo Chart */}
+                    {chartPoints && (
+                      <div className="relative w-full bg-slate-50/50 dark:bg-slate-800/20 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                        <svg
+                          viewBox={`0 0 ${chartPoints.width} ${chartPoints.height}`}
+                          className="w-full h-72 sm:h-84 overflow-visible"
+                        >
+                          <defs>
+                            <linearGradient id="coneGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.28" />
+                              <stop offset="100%" stopColor="#818cf8" stopOpacity="0.04" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Horizontal Grid lines */}
+                          {[0, 0.25, 0.5, 0.75, 1].map((pct, idx) => {
+                            const y = chartPoints.padding.top + (chartPoints.height - chartPoints.padding.top - chartPoints.padding.bottom) * (1 - pct);
+                            const val = chartPoints.maxBalance * pct;
+                            return (
+                              <g key={idx}>
+                                <line
+                                  x1={chartPoints.padding.left}
+                                  y1={y}
+                                  x2={chartPoints.width - chartPoints.padding.right}
+                                  y2={y}
+                                  stroke="currentColor"
+                                  className="text-slate-200 dark:text-slate-800"
+                                  strokeDasharray="4 4"
+                                />
+                                <text
+                                  x={chartPoints.padding.left - 8}
+                                  y={y + 4}
+                                  textAnchor="end"
+                                  className="text-[10px] fill-slate-400 font-mono"
+                                >
+                                  {formatCurrency(val)}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* Confidence Cone Area */}
+                          <path d={chartPoints.areaPath} fill="url(#coneGradient)" />
+
+                          {/* Pessimistic Trajectory Line */}
+                          <path
+                            d={chartPoints.pessPath}
+                            fill="none"
+                            stroke="#f59e0b"
+                            strokeWidth="2.2"
+                            strokeDasharray="5 3"
+                            className="transition-all duration-300"
+                          />
+
+                          {/* Optimistic Trajectory Line */}
+                          <path
+                            d={chartPoints.optPath}
+                            fill="none"
+                            stroke="#38bdf8"
+                            strokeWidth="2.2"
+                            strokeDasharray="5 3"
+                            className="transition-all duration-300"
+                          />
+
+                          {/* Median Trajectory Line (Dominant) */}
+                          <path
+                            d={chartPoints.medPath}
+                            fill="none"
+                            stroke="#4f46e5"
+                            strokeWidth="3.5"
+                            strokeLinecap="round"
+                            className="transition-all duration-300"
+                          />
+
+                          {/* Retirement Milestone Vertical Line */}
+                          {chartPoints.retX && (
+                            <g>
+                              <line
+                                x1={chartPoints.retX}
+                                y1={chartPoints.padding.top}
+                                x2={chartPoints.retX}
+                                y2={chartPoints.height - chartPoints.padding.bottom}
+                                stroke="#f43f5e"
+                                strokeWidth="2"
+                                strokeDasharray="3 3"
+                              />
+                              <text
+                                x={chartPoints.retX}
+                                y={chartPoints.padding.top - 6}
+                                textAnchor="middle"
+                                className="text-[10px] fill-rose-600 dark:fill-rose-400 font-bold"
+                              >
+                                Retire @ {profile.retirementAge}
+                              </text>
+                            </g>
+                          )}
+
+                          {/* X-Axis Age Labels */}
+                          {chartPoints.traj.filter((_, i) => i % 5 === 0 || i === chartPoints.traj.length - 1).map((t, idx) => {
+                            const originalIdx = chartPoints.traj.indexOf(t);
+                            const x = chartPoints.getX(originalIdx);
+                            return (
+                              <text
+                                key={idx}
+                                x={x}
+                                y={chartPoints.height - chartPoints.padding.bottom + 18}
+                                textAnchor="middle"
+                                className="text-[10px] fill-slate-400 font-semibold"
+                              >
+                                Age {t.age}
+                              </text>
+                            );
+                          })}
+
+                          {/* Interactive Hover Probe Points */}
+                          {chartPoints.traj.map((t, i) => {
+                            const x = chartPoints.getX(i);
+                            return (
+                              <rect
+                                key={i}
+                                x={x - 8}
+                                y={chartPoints.padding.top}
+                                width={16}
+                                height={chartPoints.height - chartPoints.padding.top - chartPoints.padding.bottom}
+                                fill="transparent"
+                                className="cursor-pointer"
+                                onMouseEnter={() => setActiveHoverPoint(t)}
+                              />
+                            );
+                          })}
+                        </svg>
+
+                        {/* Interactive Tooltip Overlay */}
+                        {activeHoverPoint && (
+                          <div className="mt-3 p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md flex items-center justify-between text-xs flex-wrap gap-2">
+                            <span className="font-bold text-slate-800 dark:text-slate-100">
+                              Age {activeHoverPoint.age} {activeHoverPoint.age === profile.retirementAge && '(Retirement Year)'}:
+                            </span>
+                            <div className="flex items-center gap-4 num-tabular">
+                              <span className="text-sky-500 font-semibold">
+                                Optimistic: {formatFullCurrency(activeHoverPoint.optimistic)}
+                              </span>
+                              <span className="text-indigo-600 dark:text-indigo-400 font-bold">
+                                Median: {formatFullCurrency(activeHoverPoint.median)}
+                              </span>
+                              <span className="text-amber-500 font-semibold">
+                                Pessimistic: {formatFullCurrency(activeHoverPoint.pessimistic)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Simulation Analysis Card */}
+                    <div className="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-xs text-indigo-950 dark:text-indigo-200 space-y-1.5">
+                      <div className="font-bold flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300">
+                        <Icon name="info" size={15} />
+                        How Monte Carlo Stress-Testing Works
+                      </div>
+                      <p className="leading-relaxed text-slate-600 dark:text-slate-400">
+                        Instead of assuming an unrealistic static return each year, this model randomly samples 500 potential market paths using your asset allocation's historical mean and standard deviation. The shaded cone represents the spread between lucky market runs (top 10%) and unlucky drawdowns (bottom 10%), proving whether your nest egg can survive sequence-of-returns risk until age {profile.lifeExpectancy}.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: WITHDRAWAL RATE & LONGEVITY MATRIX */}
+                {activeTab === 'longevity' && (
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Icon name="barChart" size={18} className="text-indigo-600 dark:text-indigo-400" />
+                        Withdrawal Rate & Longevity Matrix (Trinity Study Benchmark)
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Evaluates how many years your estimated retirement balance lasts under varied withdrawal rates.
+                      </p>
+                    </div>
+
+                    {/* Interactive Custom Rate Slider */}
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                          Custom Annual Withdrawal Rate:
+                        </span>
+                        <span className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 num-tabular">
+                          {customWithdrawalRate.toFixed(1)}% ({formatFullCurrency(customLongevity.annualWithdrawal)}/yr)
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="2.5"
+                        max="8.0"
+                        step="0.1"
+                        value={customWithdrawalRate}
+                        onChange={(e) => setCustomWithdrawalRate(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                      />
+                      <div className="flex items-center justify-between text-xs text-slate-500">
+                        <span>Conservative (2.5%)</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                          Result: {customLongevity.isPerpetual ? 'Perpetual (Lasts indefinitely)' : `Lasts ${customLongevity.yearsLasted} years (Until age ${customLongevity.depletionAge})`}
+                        </span>
+                        <span>Aggressive (8.0%)</span>
+                      </div>
+                    </div>
+
+                    {/* Longevity Comparison Matrix Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th className="py-3 px-4">Rate</th>
+                            <th className="py-3 px-4">Annual Outflow</th>
+                            <th className="py-3 px-4">Fund Longevity</th>
+                            <th className="py-3 px-4">Depletion Age</th>
+                            <th className="py-3 px-4 text-right">30-Yr Success</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                          {longevityMatrix.map((item) => (
+                            <tr
+                              key={item.rate}
+                              className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition ${
+                                Math.abs(item.rate - customWithdrawalRate) < 0.1 ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''
+                              }`}
+                            >
+                              <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white num-tabular">
+                                {item.rate.toFixed(1)}%
+                              </td>
+                              <td className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-300 num-tabular">
+                                {formatFullCurrency(item.annualWithdrawal)}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                  item.isPerpetual || item.yearsLasted >= 35
+                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
+                                    : item.yearsLasted >= 25
+                                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                                    : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
+                                }`}>
+                                  {item.isPerpetual ? '50+ yrs (Perpetual)' : `${item.yearsLasted} years`}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 font-medium text-slate-600 dark:text-slate-400 num-tabular">
+                                {item.isPerpetual ? 'Never Depleted' : `Age ${item.depletionAge}`}
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <span className={`font-bold num-tabular ${
+                                  item.benchmarkSuccess >= 90
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : item.benchmarkSuccess >= 75
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-rose-600 dark:text-rose-400'
+                                }`}>
+                                  {item.benchmarkSuccess}%
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 space-y-2">
+                      <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <Icon name="checkCircle" size={15} className="text-emerald-500" />
+                        The 4% Rule & Modern Safe Withdrawal Rates (SWR)
+                      </div>
+                      <p className="leading-relaxed">
+                        The famous Trinity Study showed that an initial 4% withdrawal rate (indexed annually to inflation) historical survived 95%+ of 30-year retirement windows. For early retirees (FIRE) aiming for 40–50 year horizons, academic research recommends a more conservative <strong>3.25% – 3.75% SWR</strong> to account for extended duration and sequence risks.
+                      </p>
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+          </main>
+
+          {/* FOOTER */}
+          <footer className="border-t border-slate-200 dark:border-slate-800 mt-16 py-8 bg-white/50 dark:bg-slate-900/50 transition-colors">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">FinVest Suite</span>
+                <span>•</span>
+                <span>App 2 of 4: Retirement Planner</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span>Zero server calls • 100% Client-side simulation</span>
+              </div>
+            </div>
+          </footer>
+
+          {/* ========================================================
+              MODAL: DATA BACKUP (EXPORT / IMPORT JSON)
+             ======================================================== */}
+          {isBackupModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden modal-animate">
+                
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                      <Icon name="database" size={18} className="text-indigo-500" />
+                      Retirement Profile Backup & Portability
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Your inputs live exclusively in browser <code className="text-indigo-500">localStorage</code>.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsBackupModalOpen(false)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  
+                  <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs text-indigo-950 dark:text-indigo-200 flex items-start gap-2.5">
+                    <Icon name="shieldCheck" size={16} className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold">Local-First Storage:</span> Saved under key prefix <code className="font-mono text-indigo-600 dark:text-indigo-300">finvest_retirement_*</code>.
+                    </div>
+                  </div>
+
+                  {/* Export Section */}
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 dark:text-white">Export Settings to JSON</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Download your asset allocation, cash flows, and simulation parameters.
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleExportBackup}
+                      className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1.5 transition"
+                    >
+                      <Icon name="download" size={14} />
+                      <span>Export JSON</span>
+                    </button>
+                  </div>
+
+                  {/* Import Section */}
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 dark:text-white">Import from JSON</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Restore retirement settings from a previously saved file.
+                      </div>
+                    </div>
+                    <label className="cursor-pointer px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm flex items-center gap-1.5 transition">
+                      <Icon name="upload" size={14} />
+                      <span>Import File</span>
+                      <input
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={handleImportBackup}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Danger / Reset Zone */}
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-xs text-slate-500">Need to restore standard assumptions?</span>
+                    <button
+                      onClick={handleResetDefaults}
+                      className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center gap-1"
+                    >
+                      <Icon name="refresh" size={13} />
+                      <span>Reset to Defaults</span>
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // Mount with React 18 createRoot
+    const rootEl = document.getElementById('root');
+    if (ReactDOM.createRoot) {
+      ReactDOM.createRoot(rootEl).render(<App />);
+    } else {
+      ReactDOM.render(<App />, rootEl);
+    }
+  </script>
+</body>
+</html>

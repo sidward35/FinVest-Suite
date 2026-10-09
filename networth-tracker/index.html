@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinVest Net Worth | Historical Wealth Tracker & Balance Sheet</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+              950: '#1e1b4b',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Google Font: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: rgba(75, 85, 99, 0.5);
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: rgba(75, 85, 99, 0.8);
+    }
+
+    .num-tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.97) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-animate {
+      animation: modalFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+
+  <!-- React 18, ReactDOM, and Babel Standalone (cdnjs Cloudflare CDN - No crossorigin to prevent file:// protocol CORS issues) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js"></script>
+
+  <!-- Secondary CDN Fallbacks -->
+  <script>
+    if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>');
+  </script>
+  <script>
+    if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>');
+  </script>
+  <script>
+    if (!window.Babel) document.write('<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>');
+  </script>
+
+  <!-- Error Catcher to prevent blank screen without visible feedback -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('App runtime error:', e);
+      var root = document.getElementById('root');
+      if (root && (!root.children.length || root.querySelector('#app-loader'))) {
+        root.innerHTML = '<div style="padding: 24px; font-family: sans-serif; color: #e11d48; background: #fff1f2; border: 1px solid #fda4af; border-radius: 12px; margin: 32px max(16px, calc((100% - 600px)/2));">' +
+          '<h2 style="margin: 0 0 8px; font-size: 18px; font-weight: 700;">⚠️ Application Initialization Error</h2>' +
+          '<p style="margin: 0; font-size: 14px; color: #4b5563;">' + (e.message || 'Script error occurred') + '</p>' +
+          '<p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Source: ' + (e.filename || '') + ' line ' + (e.lineno || '') + '</p>' +
+        '</div>';
+      }
+    });
+  </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-200">
+  <div id="root" class="min-h-full flex flex-col">
+    <div id="app-loader" class="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-500 text-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <span>Loading FinVest Net Worth Tracker...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- React Application Script -->
+  <script type="text/babel" data-presets="react,env">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // --- ICON SYSTEM (Lucide-style Clean SVGs - All multi-elements wrapped in React Fragments) ---
+    const Icon = ({ name, size = 18, className = "" }) => {
+      const icons = {
+        landmark: <><line x1="3" y1="22" x2="21" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="6" y1="18" x2="6" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="10" y1="18" x2="10" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="14" y1="18" x2="14" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="18" y1="18" x2="18" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><polygon points="12 2 20 7 4 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>,
+        trendingUp: <path d="M22 7 13.5 15.5 8.5 10.5 2 17M16 7h6v6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        trendingDown: <path d="m22 17-8.5-8.5-5 5L2 7M16 17h6v-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        dollarSign: <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        pieChart: <><path d="M21.21 15.89A10 10 0 1 1 8 2.83" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><path d="M22 12A10 10 0 0 0 12 2v10z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>,
+        barChart: <path d="M12 20V10M18 20V4M6 20v-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        plus: <path d="M5 12h14M12 5v14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        trash: <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        edit: <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        sun: <><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></>,
+        moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        upload: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        database: <><ellipse cx="12" cy="5" rx="9" ry="3" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5M3 12c0 1.66 4 3 9 3s9-1.34 9-3" fill="none" stroke="currentColor" strokeWidth="2" /></>,
+        shieldCheck: <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.8 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        refresh: <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16M16 16h5v5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        x: <path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        menu: <path d="M4 12h16M4 6h16M4 18h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        calendar: <><rect width="18" height="18" x="3" y="4" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M16 2v4M8 2v4M3 10h18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></>,
+        shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        sunUmbrella: <><path d="M12 2v20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><path d="M4 12a8 8 0 0 1 16 0z" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M4 12c2.5-1 5.5-1 8 0 2.5-1 5.5-1 8 0" fill="none" stroke="currentColor" strokeWidth="2" /></>,
+        arrowUpRight: <path d="M7 17 17 7M7 7h10v10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        arrowDownRight: <path d="m7 7 10 10M17 7v10H7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+        layers: <><polygon points="12 2 2 7 12 12 22 7 12 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="2 17 12 22 22 17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="2 12 12 17 22 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>,
+        check: <polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      };
+
+      return (
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          className={`inline-block shrink-0 ${className}`}
+        >
+          {icons[name] || icons.landmark}
+        </svg>
+      );
+    };
+
+    // --- CURRENCY & NUMBER FORMATTERS ---
+    const formatCurrency = (num) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(num || 0);
+    };
+
+    const formatCompactCurrency = (num) => {
+      if (Math.abs(num) >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
+      if (Math.abs(num) >= 10000) return `$${(num / 1000).toFixed(0)}k`;
+      return formatCurrency(num);
+    };
+
+    // --- INITIAL SEED ACCOUNTS ---
+    const SEED_ACCOUNTS = [
+      // Assets
+      { id: 'acc_checking', name: 'Chase Premier Checking', type: 'asset', category: 'cash', isRetirement: false, institution: 'JPMorgan Chase' },
+      { id: 'acc_hysa', name: 'Marcus High-Yield Savings (4.4%)', type: 'asset', category: 'cash', isRetirement: false, institution: 'Goldman Sachs' },
+      { id: 'acc_401k', name: 'Fidelity Traditional 401(k)', type: 'asset', category: 'retirement', isRetirement: true, institution: 'Fidelity' },
+      { id: 'acc_roth', name: 'Vanguard Roth IRA', type: 'asset', category: 'retirement', isRetirement: true, institution: 'Vanguard' },
+      { id: 'acc_brokerage', name: 'Charles Schwab Individual Taxable', type: 'asset', category: 'investment', isRetirement: false, institution: 'Charles Schwab' },
+      { id: 'acc_realestate', name: 'Primary Residence (Austin)', type: 'asset', category: 'real_estate', isRetirement: false, institution: 'Zillow / County' },
+      { id: 'acc_crypto', name: 'Coldcard Bitcoin Treasury', type: 'asset', category: 'crypto', isRetirement: false, institution: 'Cold Storage' },
+      
+      // Liabilities
+      { id: 'acc_mortgage', name: 'Rocket Mortgage (30Y Fixed @ 3.125%)', type: 'liability', category: 'mortgage', isRetirement: false, institution: 'Rocket' },
+      { id: 'acc_autoloan', name: 'Tesla Vehicle Financing (1.9%)', type: 'liability', category: 'auto_loan', isRetirement: false, institution: 'Tesla Finance' },
+      { id: 'acc_creditcard', name: 'Chase Sapphire Preferred Card', type: 'liability', category: 'credit_card', isRetirement: false, institution: 'JPMorgan Chase' }
+    ];
+
+    // --- INITIAL SEED HISTORICAL SNAPSHOTS ---
+    const SEED_SNAPSHOTS = [
+      {
+        id: 'snp_1',
+        date: '2025-06-01',
+        notes: 'Mid-year 2025 baseline audit',
+        balances: {
+          acc_checking: 14200,
+          acc_hysa: 32000,
+          acc_401k: 84000,
+          acc_roth: 28500,
+          acc_brokerage: 42000,
+          acc_realestate: 480000,
+          acc_crypto: 12000,
+          acc_mortgage: 375000,
+          acc_autoloan: 22000,
+          acc_creditcard: 2400
+        }
+      },
+      {
+        id: 'snp_2',
+        date: '2025-09-01',
+        notes: 'Q3 balance update after bonus contribution',
+        balances: {
+          acc_checking: 15800,
+          acc_hysa: 35500,
+          acc_401k: 92400,
+          acc_roth: 31000,
+          acc_brokerage: 46200,
+          acc_realestate: 485000,
+          acc_crypto: 14500,
+          acc_mortgage: 371500,
+          acc_autoloan: 20500,
+          acc_creditcard: 1800
+        }
+      },
+      {
+        id: 'snp_3',
+        date: '2025-12-01',
+        notes: 'Year-end 2025 reconciliation',
+        balances: {
+          acc_checking: 17500,
+          acc_hysa: 40000,
+          acc_401k: 104500,
+          acc_roth: 35000,
+          acc_brokerage: 51200,
+          acc_realestate: 490000,
+          acc_crypto: 18200,
+          acc_mortgage: 368000,
+          acc_autoloan: 19000,
+          acc_creditcard: 2100
+        }
+      },
+      {
+        id: 'snp_4',
+        date: '2026-03-01',
+        notes: 'Q1 2026 tax season & IRA maxing',
+        balances: {
+          acc_checking: 16200,
+          acc_hysa: 42500,
+          acc_401k: 116000,
+          acc_roth: 42000,
+          acc_brokerage: 56800,
+          acc_realestate: 495000,
+          acc_crypto: 21500,
+          acc_mortgage: 364200,
+          acc_autoloan: 17400,
+          acc_creditcard: 1600
+        }
+      },
+      {
+        id: 'snp_5',
+        date: '2026-06-01',
+        notes: 'Mid-year 2026 market rally update',
+        balances: {
+          acc_checking: 18500,
+          acc_hysa: 45000,
+          acc_401k: 129000,
+          acc_roth: 46500,
+          acc_brokerage: 63400,
+          acc_realestate: 505000,
+          acc_crypto: 26000,
+          acc_mortgage: 360400,
+          acc_autoloan: 15800,
+          acc_creditcard: 2200
+        }
+      },
+      {
+        id: 'snp_6',
+        date: '2026-10-01',
+        notes: 'Current point-in-time financial snapshot',
+        balances: {
+          acc_checking: 19800,
+          acc_hysa: 48500,
+          acc_401k: 141200,
+          acc_roth: 51800,
+          acc_brokerage: 72000,
+          acc_realestate: 515000,
+          acc_crypto: 31500,
+          acc_mortgage: 356000,
+          acc_autoloan: 14200,
+          acc_creditcard: 1950
+        }
+      }
+    ];
+
+    // --- MAIN REACT APPLICATION ---
+    function App() {
+      // 1. Theme State (synchronized with finvest_theme)
+      const [theme, setTheme] = useState(() => {
+        const saved = localStorage.getItem('finvest_theme');
+        if (saved) return saved;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      });
+
+      useEffect(() => {
+        const root = document.documentElement;
+        if (theme === 'dark') {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+        localStorage.setItem('finvest_theme', theme);
+      }, [theme]);
+
+      const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+      };
+
+      // 2. Data Persistence (finvest_networth_*)
+      const [accounts, setAccounts] = useState(() => {
+        try {
+          const raw = localStorage.getItem('finvest_networth_accounts');
+          return raw ? JSON.parse(raw) : SEED_ACCOUNTS;
+        } catch (e) {
+          return SEED_ACCOUNTS;
+        }
+      });
+
+      const [snapshots, setSnapshots] = useState(() => {
+        try {
+          const raw = localStorage.getItem('finvest_networth_snapshots');
+          return raw ? JSON.parse(raw) : SEED_SNAPSHOTS;
+        } catch (e) {
+          return SEED_SNAPSHOTS;
+        }
+      });
+
+      useEffect(() => {
+        localStorage.setItem('finvest_networth_accounts', JSON.stringify(accounts));
+      }, [accounts]);
+
+      useEffect(() => {
+        localStorage.setItem('finvest_networth_snapshots', JSON.stringify(snapshots));
+      }, [snapshots]);
+
+      // Navigation Suite Links
+      const suiteApps = [
+        { name: 'Budget', url: 'https://budget.yourdomain.com', active: false, desc: 'Cashflow & Expenses' },
+        { name: 'Retirement', url: 'https://retirement.yourdomain.com', active: false, desc: 'FIRE & Projections' },
+        { name: 'Investments', url: 'https://investments.yourdomain.com', active: false, desc: 'Holdings & Dividends' },
+        { name: 'Net Worth', url: 'https://networth.yourdomain.com', active: true, desc: 'Assets & Liabilities' },
+      ];
+
+      // UI States
+      const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'record' | 'accounts' | 'history'
+      const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+      const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+      const [isAddAccountModalOpen, setIsAddAccountModalOpen] = useState(false);
+      const [editingAccount, setEditingAccount] = useState(null);
+      const [editingSnapshot, setEditingSnapshot] = useState(null);
+      const [toast, setToast] = useState(null);
+
+      // Snapshot entry form state
+      const [entryDate, setEntryDate] = useState('2026-10-09');
+      const [entryNotes, setEntryNotes] = useState('');
+      const [entryBalances, setEntryBalances] = useState({});
+
+      const showToast = (message) => {
+        setToast(message);
+        setTimeout(() => setToast(null), 3500);
+      };
+
+      // Account Map Lookup
+      const accountMap = useMemo(() => {
+        const map = {};
+        accounts.forEach(a => { map[a.id] = a; });
+        return map;
+      }, [accounts]);
+
+      // Sorted snapshots by date ascending
+      const sortedSnapshots = useMemo(() => {
+        return [...snapshots].sort((a, b) => new Date(a.date) - new Date(b.date));
+      }, [snapshots]);
+
+      // Calculate calculated totals for each snapshot
+      const snapshotCalculations = useMemo(() => {
+        return sortedSnapshots.map(snp => {
+          let totalAssets = 0;
+          let totalLiabilities = 0;
+          let retirementAssets = 0;
+          const categoryAssets = {};
+
+          Object.keys(snp.balances || {}).forEach(accId => {
+            const acc = accountMap[accId];
+            const val = Number(snp.balances[accId]) || 0;
+            if (!acc) return;
+
+            if (acc.type === 'asset') {
+              totalAssets += val;
+              if (acc.isRetirement) {
+                retirementAssets += val;
+              }
+              const cat = acc.category || 'other';
+              categoryAssets[cat] = (categoryAssets[cat] || 0) + val;
+            } else if (acc.type === 'liability') {
+              totalLiabilities += val;
+            }
+          });
+
+          const netWorth = totalAssets - totalLiabilities;
+          const debtToAsset = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
+          const retirementRatio = totalAssets > 0 ? (retirementAssets / totalAssets) * 100 : 0;
+
+          return {
+            id: snp.id,
+            date: snp.date,
+            formattedDate: new Date(snp.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+            notes: snp.notes,
+            balances: snp.balances,
+            totalAssets,
+            totalLiabilities,
+            retirementAssets,
+            netWorth,
+            debtToAsset,
+            retirementRatio,
+            categoryAssets
+          };
+        });
+      }, [sortedSnapshots, accountMap]);
+
+      // Latest Snapshot for current dashboard stats
+      const latestSnapshot = useMemo(() => {
+        if (snapshotCalculations.length === 0) return null;
+        return snapshotCalculations[snapshotCalculations.length - 1];
+      }, [snapshotCalculations]);
+
+      // Previous snapshot for month-over-month delta
+      const previousSnapshot = useMemo(() => {
+        if (snapshotCalculations.length < 2) return null;
+        return snapshotCalculations[snapshotCalculations.length - 2];
+      }, [snapshotCalculations]);
+
+      // Pre-fill balance entry when switching to 'record' tab
+      useEffect(() => {
+        if (latestSnapshot && Object.keys(entryBalances).length === 0) {
+          setEntryBalances(latestSnapshot.balances || {});
+        }
+      }, [latestSnapshot]);
+
+      // Save or update snapshot
+      const handleSaveSnapshot = (e) => {
+        e.preventDefault();
+        const newBalances = {};
+        accounts.forEach(acc => {
+          newBalances[acc.id] = parseFloat(entryBalances[acc.id]) || 0;
+        });
+
+        if (editingSnapshot) {
+          setSnapshots(prev => prev.map(s => s.id === editingSnapshot.id ? {
+            ...s,
+            date: entryDate,
+            notes: entryNotes,
+            balances: newBalances
+          } : s));
+          showToast(`Snapshot for ${entryDate} updated`);
+          setEditingSnapshot(null);
+        } else {
+          const newSnp = {
+            id: 'snp_' + Date.now(),
+            date: entryDate,
+            notes: entryNotes,
+            balances: newBalances
+          };
+          setSnapshots(prev => [...prev, newSnp]);
+          showToast(`New snapshot for ${entryDate} recorded`);
+        }
+
+        setActiveTab('dashboard');
+      };
+
+      const handleEditSnapshotInit = (snp) => {
+        setEditingSnapshot(snp);
+        setEntryDate(snp.date);
+        setEntryNotes(snp.notes || '');
+        setEntryBalances(snp.balances || {});
+        setActiveTab('record');
+      };
+
+      const handleDeleteSnapshot = (id) => {
+        if (window.confirm('Are you sure you want to delete this historical snapshot?')) {
+          setSnapshots(prev => prev.filter(s => s.id !== id));
+          showToast('Snapshot deleted');
+        }
+      };
+
+      // Account Management
+      const handleSaveAccount = (accData) => {
+        if (editingAccount) {
+          setAccounts(prev => prev.map(a => a.id === editingAccount.id ? { ...accData, id: editingAccount.id } : a));
+          showToast(`Updated account "${accData.name}"`);
+        } else {
+          const newAcc = { ...accData, id: 'acc_' + Date.now() };
+          setAccounts(prev => [...prev, newAcc]);
+          showToast(`Account "${newAcc.name}" created`);
+        }
+        setIsAddAccountModalOpen(false);
+        setEditingAccount(null);
+      };
+
+      const handleDeleteAccount = (id) => {
+        if (window.confirm('Delete this account? Historical balances tied to this account will no longer appear in new calculations.')) {
+          setAccounts(prev => prev.filter(a => a.id !== id));
+          showToast('Account removed');
+        }
+      };
+
+      // Backup: Export JSON
+      const handleExportBackup = () => {
+        const backupPayload = {
+          app: 'finvest_networth',
+          version: '1.0.0',
+          exportedAt: new Date().toISOString(),
+          data: {
+            accounts,
+            snapshots
+          }
+        };
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
+        const downloadAnchor = document.createElement('a');
+        const fileName = `finvest-networth-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast('Net worth data exported to JSON');
+      };
+
+      // Backup: Import JSON
+      const handleImportBackup = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed || parsed.app !== 'finvest_networth' || !parsed.data) {
+              alert('Invalid backup file. The uploaded file does not match the FinVest Net Worth schema.');
+              return;
+            }
+
+            if (Array.isArray(parsed.data.accounts)) setAccounts(parsed.data.accounts);
+            if (Array.isArray(parsed.data.snapshots)) setSnapshots(parsed.data.snapshots);
+            showToast('Net worth data restored from backup!');
+            setIsBackupModalOpen(false);
+          } catch (err) {
+            alert('Failed to parse JSON file: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const handleResetDemoData = () => {
+        if (window.confirm('Reset all net worth records to sample demo state?')) {
+          setAccounts(SEED_ACCOUNTS);
+          setSnapshots(SEED_SNAPSHOTS);
+          showToast('Reset to demo net worth records completed');
+          setIsBackupModalOpen(false);
+        }
+      };
+
+      // --- CHART SVG HELPERS ---
+      // 1. Net Worth Over Time Chart Points
+      const netWorthChartData = useMemo(() => {
+        if (snapshotCalculations.length < 2) return null;
+        const vals = snapshotCalculations.map(s => s.netWorth);
+        const minVal = Math.min(...vals, 0);
+        const maxVal = Math.max(...vals, 100000);
+        const width = 800;
+        const height = 260;
+        const pad = { top: 20, right: 30, bottom: 35, left: 65 };
+
+        const innerW = width - pad.left - pad.right;
+        const innerH = height - pad.top - pad.bottom;
+
+        const getX = (idx) => pad.left + (idx / (snapshotCalculations.length - 1)) * innerW;
+        const getY = (val) => pad.top + innerH - ((val - minVal) / (maxVal - minVal || 1)) * innerH;
+
+        let linePath = '';
+        let areaPath = '';
+
+        snapshotCalculations.forEach((s, i) => {
+          const x = getX(i);
+          const y = getY(s.netWorth);
+          if (i === 0) {
+            linePath += `M ${x} ${y}`;
+            areaPath += `M ${x} ${pad.top + innerH} L ${x} ${y}`;
+          } else {
+            linePath += ` L ${x} ${y}`;
+            areaPath += ` L ${x} ${y}`;
+          }
+        });
+        areaPath += ` L ${getX(snapshotCalculations.length - 1)} ${pad.top + innerH} Z`;
+
+        return { width, height, pad, minVal, maxVal, getX, getY, linePath, areaPath };
+      }, [snapshotCalculations]);
+
+      // 2. Retirement Tracker Trendline Points
+      const retirementChartData = useMemo(() => {
+        if (snapshotCalculations.length < 2) return null;
+        const retVals = snapshotCalculations.map(s => s.retirementAssets);
+        const maxVal = Math.max(...retVals, 50000);
+        const width = 800;
+        const height = 240;
+        const pad = { top: 20, right: 30, bottom: 35, left: 65 };
+
+        const innerW = width - pad.left - pad.right;
+        const innerH = height - pad.top - pad.bottom;
+
+        const getX = (idx) => pad.left + (idx / (snapshotCalculations.length - 1)) * innerW;
+        const getY = (val) => pad.top + innerH - (val / (maxVal || 1)) * innerH;
+
+        let retLine = '';
+        snapshotCalculations.forEach((s, i) => {
+          const x = getX(i);
+          const y = getY(s.retirementAssets);
+          if (i === 0) retLine += `M ${x} ${y}`;
+          else retLine += ` L ${x} ${y}`;
+        });
+
+        return { width, height, pad, maxVal, getX, getY, retLine };
+      }, [snapshotCalculations]);
+
+      // 4. Combined Bi-Directional Balance Bar Chart Points (Assets Above, Liabilities Below)
+      const biDirectionalChartData = useMemo(() => {
+        if (snapshotCalculations.length === 0) return null;
+        const maxAsset = Math.max(...snapshotCalculations.map(s => s.totalAssets), 100000);
+        const maxLiab = Math.max(...snapshotCalculations.map(s => s.totalLiabilities), 100000);
+        const scaleMax = Math.max(maxAsset, maxLiab);
+        return { scaleMax };
+      }, [snapshotCalculations]);
+
+      // Unique asset categories for stacked composition chart
+      const allAssetCategories = [
+        { id: 'cash', label: 'Cash & Savings', color: '#10b981' },
+        { id: 'retirement', label: 'Retirement (401k/IRA)', color: '#6366f1' },
+        { id: 'investment', label: 'Taxable Brokerage', color: '#0ea5e9' },
+        { id: 'real_estate', label: 'Real Estate Equity', color: '#f59e0b' },
+        { id: 'crypto', label: 'Crypto & Alts', color: '#a855f7' }
+      ];
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+          
+          {/* TOAST ALERT NOTIFICATION */}
+          {toast && (
+            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl shadow-2xl border border-slate-700/50 dark:border-slate-200/50 text-sm font-medium animate-bounce">
+              <span className="text-emerald-400 dark:text-emerald-600 font-bold">✓</span>
+              <span>{toast}</span>
+            </div>
+          )}
+
+          {/* 1. UNIFIED SUITE TOP NAVIGATION BAR (STICKY) */}
+          <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                
+                {/* Brand Logo & Name */}
+                <div className="flex items-center gap-8">
+                  <a href="#" className="flex items-center gap-2.5 group">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                      <Icon name="landmark" size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-indigo-200 dark:to-slate-200">
+                          FinVest
+                        </span>
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
+                          Net Worth
+                        </span>
+                      </div>
+                      <span className="block text-[11px] text-slate-500 dark:text-slate-400 -mt-0.5">
+                        Balance Sheet & Wealth
+                      </span>
+                    </div>
+                  </a>
+
+                  {/* Desktop Suite Links */}
+                  <nav className="hidden md:flex items-center space-x-1">
+                    {suiteApps.map((app) => (
+                      <a
+                        key={app.name}
+                        href={app.url}
+                        title={app.desc}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                          app.active
+                            ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 shadow-sm border border-indigo-200/50 dark:border-indigo-800/60'
+                            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        }`}
+                      >
+                        {app.name}
+                        {app.active && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse"></span>
+                        )}
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+
+                {/* Right Action Controls: Local Badge, Backup, Theme, Mobile Nav */}
+                <div className="flex items-center gap-2.5">
+                  <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
+                    <Icon name="shieldCheck" size={13} />
+                    <span>Private & Offline</span>
+                  </div>
+
+                  {/* Data Backup Modal Trigger */}
+                  <button
+                    onClick={() => setIsBackupModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition"
+                    title="Export or Import JSON Data"
+                  >
+                    <Icon name="database" size={14} className="text-slate-500 dark:text-slate-400" />
+                    <span className="hidden sm:inline">Backup & Data</span>
+                  </button>
+
+                  {/* Theme Mode Toggle */}
+                  <button
+                    onClick={toggleTheme}
+                    className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    aria-label="Toggle Dark/Light Mode"
+                  >
+                    {theme === 'dark' ? (
+                      <Icon name="sun" size={18} className="text-amber-400" />
+                    ) : (
+                      <Icon name="moon" size={18} className="text-slate-700" />
+                    )}
+                  </button>
+
+                  {/* Mobile Navigation Menu Toggle */}
+                  <button
+                    onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                    className="p-2 md:hidden rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Icon name={isMobileNavOpen ? "x" : "menu"} size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Navigation Drawer */}
+            {isMobileNavOpen && (
+              <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 space-y-1">
+                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">
+                  FinVest Suite Apps
+                </div>
+                {suiteApps.map((app) => (
+                  <a
+                    key={app.name}
+                    href={app.url}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium ${
+                      app.active
+                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-semibold'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>{app.name}</span>
+                    <span className="text-xs text-slate-400">{app.desc}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </header>
+
+          {/* MAIN APPLICATION CONTAINER */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            
+            {/* TOP HEADER & TABS NAVIGATION */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/70 dark:border-slate-800">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  Net Worth Tracker
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  Track balance sheet growth over time, retirement nest egg pacing, and liability payoff.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center flex-wrap gap-2.5">
+                <button
+                  onClick={() => {
+                    setEditingAccount(null);
+                    setIsAddAccountModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-xs transition flex items-center gap-1.5"
+                >
+                  <Icon name="plus" size={14} className="text-slate-400" />
+                  <span>New Account</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setEditingSnapshot(null);
+                    setEntryDate(new Date().toISOString().slice(0, 10));
+                    setEntryNotes('');
+                    if (latestSnapshot) setEntryBalances(latestSnapshot.balances || {});
+                    setActiveTab('record');
+                  }}
+                  className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center gap-1.5"
+                >
+                  <Icon name="calendar" size={16} />
+                  <span>Record Snapshot</span>
+                </button>
+              </div>
+            </div>
+
+            {/* HIGH-LEVEL KPI METRIC CARDS */}
+            {latestSnapshot && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                {/* 1. Current Net Worth */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Total Net Worth
+                    </span>
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                      <Icon name="landmark" size={16} />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white num-tabular">
+                      {formatCurrency(latestSnapshot.netWorth)}
+                    </div>
+                    {previousSnapshot && (
+                      <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold num-tabular">
+                        <span className={latestSnapshot.netWorth >= previousSnapshot.netWorth ? 'text-emerald-600 dark:text-emerald-400 flex items-center' : 'text-rose-600 dark:text-rose-400 flex items-center'}>
+                          <Icon name={latestSnapshot.netWorth >= previousSnapshot.netWorth ? "arrowUpRight" : "arrowDownRight"} size={13} />
+                          {latestSnapshot.netWorth >= previousSnapshot.netWorth ? '+' : ''}{formatCurrency(latestSnapshot.netWorth - previousSnapshot.netWorth)}
+                        </span>
+                        <span className="text-slate-400 font-normal">vs. {previousSnapshot.formattedDate}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Total Assets */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Total Assets
+                    </span>
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <Icon name="trendingUp" size={16} />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white num-tabular">
+                      {formatCurrency(latestSnapshot.totalAssets)}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Across {accounts.filter(a => a.type === 'asset').length} asset accounts
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Total Liabilities */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Total Liabilities
+                    </span>
+                    <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                      <Icon name="trendingDown" size={16} />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-rose-600 dark:text-rose-400 num-tabular">
+                      {formatCurrency(latestSnapshot.totalLiabilities)}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Debt-to-Asset: {latestSnapshot.debtToAsset.toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Combined Retirement Accounts */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Retirement Accounts
+                    </span>
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                      <Icon name="sunUmbrella" size={16} />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white num-tabular">
+                      {formatCurrency(latestSnapshot.retirementAssets)}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      {latestSnapshot.retirementRatio.toFixed(1)}% of total portfolio assets
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB SELECTOR HEADER */}
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+                  activeTab === 'dashboard'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon name="pieChart" size={16} />
+                <span>Dashboard & Visualizations</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('record')}
+                className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+                  activeTab === 'record'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon name="calendar" size={16} />
+                <span>Record Snapshot</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('accounts')}
+                className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+                  activeTab === 'accounts'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon name="landmark" size={16} />
+                <span>Manage Accounts ({accounts.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+                  activeTab === 'history'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon name="layers" size={16} />
+                <span>Snapshot History ({snapshots.length})</span>
+              </button>
+            </div>
+
+            {/* ========================================================
+                TAB 1: COMPREHENSIVE DASHBOARD & 5 VISUALIZATIONS
+               ======================================================== */}
+            {activeTab === 'dashboard' && (
+              <div className="space-y-8">
+                
+                {/* ROW 1: Net Worth Line Chart & Retirement Tracker */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  
+                  {/* CHART 1: Net Worth Over Time (7 cols) */}
+                  <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Icon name="trendingUp" size={18} className="text-indigo-600 dark:text-indigo-400" />
+                            Net Worth Over Time
+                          </h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Trajectory dynamically aggregated across date snapshots
+                          </p>
+                        </div>
+                        {latestSnapshot && (
+                          <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-lg">
+                            {formatCurrency(latestSnapshot.netWorth)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* SVG Line & Area Chart */}
+                      {netWorthChartData && (
+                        <div className="w-full bg-slate-50/50 dark:bg-slate-800/20 rounded-xl p-2 border border-slate-100 dark:border-slate-800">
+                          <svg
+                            viewBox={`0 0 ${netWorthChartData.width} ${netWorthChartData.height}`}
+                            className="w-full h-64 overflow-visible"
+                          >
+                            <defs>
+                              <linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.32" />
+                                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.02" />
+                              </linearGradient>
+                            </defs>
+
+                            {/* Horizontal Grid lines */}
+                            {[0, 0.33, 0.66, 1].map((pct, idx) => {
+                              const y = netWorthChartData.pad.top + (netWorthChartData.height - netWorthChartData.pad.top - netWorthChartData.pad.bottom) * (1 - pct);
+                              const val = netWorthChartData.minVal + (netWorthChartData.maxVal - netWorthChartData.minVal) * pct;
+                              return (
+                                <g key={idx}>
+                                  <line
+                                    x1={netWorthChartData.pad.left}
+                                    y1={y}
+                                    x2={netWorthChartData.width - netWorthChartData.pad.right}
+                                    y2={y}
+                                    stroke="currentColor"
+                                    className="text-slate-200 dark:text-slate-800"
+                                    strokeDasharray="4 4"
+                                  />
+                                  <text
+                                    x={netWorthChartData.pad.left - 8}
+                                    y={y + 4}
+                                    textAnchor="end"
+                                    className="text-[10px] fill-slate-400 font-mono"
+                                  >
+                                    {formatCompactCurrency(val)}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {/* Area Fill */}
+                            <path d={netWorthChartData.areaPath} fill="url(#nwGrad)" />
+
+                            {/* Net Worth Line */}
+                            <path
+                              d={netWorthChartData.linePath}
+                              fill="none"
+                              stroke="#6366f1"
+                              strokeWidth="3.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+
+                            {/* Points & Labels */}
+                            {snapshotCalculations.map((s, i) => {
+                              const x = netWorthChartData.getX(i);
+                              const y = netWorthChartData.getY(s.netWorth);
+                              return (
+                                <g key={s.id} className="group cursor-pointer">
+                                  <circle
+                                    cx={x}
+                                    cy={y}
+                                    r="4.5"
+                                    className="fill-white dark:fill-slate-900 stroke-indigo-600 stroke-[3px]"
+                                  />
+                                  <text
+                                    x={x}
+                                    y={netWorthChartData.height - netWorthChartData.pad.bottom + 16}
+                                    textAnchor="middle"
+                                    className="text-[10px] fill-slate-400 font-semibold"
+                                  >
+                                    {s.formattedDate}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <span>Baseline: {snapshotCalculations[0]?.formattedDate}</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        All-Time Growth: +{formatCurrency((latestSnapshot?.netWorth || 0) - (snapshotCalculations[0]?.netWorth || 0))}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CHART 2: Retirement Tracker Trendline (5 cols) */}
+                  <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Icon name="sunUmbrella" size={18} className="text-amber-500" />
+                            Retirement Account Tracker
+                          </h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Combined balance of accounts flagged as retirement (401k, IRA, HSA)
+                          </p>
+                        </div>
+                        {latestSnapshot && (
+                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg">
+                            {formatCurrency(latestSnapshot.retirementAssets)}
+                          </span>
+                        )}
+                      </div>
+
+                      {retirementChartData && (
+                        <div className="w-full bg-slate-50/50 dark:bg-slate-800/20 rounded-xl p-2 border border-slate-100 dark:border-slate-800">
+                          <svg
+                            viewBox={`0 0 ${retirementChartData.width} ${retirementChartData.height}`}
+                            className="w-full h-64 overflow-visible"
+                          >
+                            {/* Horizontal Grid */}
+                            {[0, 0.5, 1].map((pct, idx) => {
+                              const y = retirementChartData.pad.top + (retirementChartData.height - retirementChartData.pad.top - retirementChartData.pad.bottom) * (1 - pct);
+                              const val = retirementChartData.maxVal * pct;
+                              return (
+                                <g key={idx}>
+                                  <line
+                                    x1={retirementChartData.pad.left}
+                                    y1={y}
+                                    x2={retirementChartData.width - retirementChartData.pad.right}
+                                    y2={y}
+                                    stroke="currentColor"
+                                    className="text-slate-200 dark:text-slate-800"
+                                    strokeDasharray="4 4"
+                                  />
+                                  <text
+                                    x={retirementChartData.pad.left - 8}
+                                    y={y + 4}
+                                    textAnchor="end"
+                                    className="text-[10px] fill-slate-400 font-mono"
+                                  >
+                                    {formatCompactCurrency(val)}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {/* Retirement Line */}
+                            <path
+                              d={retirementChartData.retLine}
+                              fill="none"
+                              stroke="#f59e0b"
+                              strokeWidth="3.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+
+                            {/* Data Points */}
+                            {snapshotCalculations.map((s, i) => {
+                              const x = retirementChartData.getX(i);
+                              const y = retirementChartData.getY(s.retirementAssets);
+                              return (
+                                <circle
+                                  key={s.id}
+                                  cx={x}
+                                  cy={y}
+                                  r="4"
+                                  className="fill-white dark:fill-slate-900 stroke-amber-500 stroke-[2.5px]"
+                                />
+                              );
+                            })}
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-3 text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <span>Accounts: {accounts.filter(a => a.isRetirement).map(a => a.name).join(', ') || 'None marked'}</span>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* ROW 2: Asset vs. Liability Donut Split & Bi-Directional Cashflow Bar Chart */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  
+                  {/* CHART 3: Asset vs. Liability Split Donut (4 cols) */}
+                  {latestSnapshot && (
+                    <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1">
+                          <Icon name="pieChart" size={18} className="text-emerald-500" />
+                          Assets vs. Liabilities
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+                          Balance sheet ratio for latest snapshot ({latestSnapshot.formattedDate})
+                        </p>
+
+                        {/* Interactive Visual Proportional Ring Bar */}
+                        <div className="w-full h-5 rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800 shadow-inner">
+                          <div
+                            style={{ width: `${(latestSnapshot.totalAssets / (latestSnapshot.totalAssets + latestSnapshot.totalLiabilities)) * 100}%` }}
+                            className="bg-emerald-500 h-full"
+                            title={`Assets: ${formatCurrency(latestSnapshot.totalAssets)}`}
+                          ></div>
+                          <div
+                            style={{ width: `${(latestSnapshot.totalLiabilities / (latestSnapshot.totalAssets + latestSnapshot.totalLiabilities)) * 100}%` }}
+                            className="bg-rose-500 h-full"
+                            title={`Liabilities: ${formatCurrency(latestSnapshot.totalLiabilities)}`}
+                          ></div>
+                        </div>
+
+                        {/* Split Details */}
+                        <div className="mt-6 space-y-3">
+                          <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40">
+                            <div className="flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Total Assets</span>
+                            </div>
+                            <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 num-tabular">
+                              {formatCurrency(latestSnapshot.totalAssets)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between p-3 rounded-xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40">
+                            <div className="flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-full bg-rose-500"></span>
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Total Liabilities</span>
+                            </div>
+                            <span className="text-xs font-extrabold text-rose-600 dark:text-rose-400 num-tabular">
+                              {formatCurrency(latestSnapshot.totalLiabilities)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 flex items-center justify-between">
+                        <span>Solvency (Debt-to-Asset):</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white num-tabular">
+                          {latestSnapshot.debtToAsset.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CHART 4: Combined Cashflow/Balance Bar Chart (Above/Below X-Axis) (8 cols) */}
+                  <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Icon name="barChart" size={18} className="text-indigo-600 dark:text-indigo-400" />
+                            Balance Sheet Expansion (Bi-Directional)
+                          </h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Assets plotted above X-axis (Emerald), Liabilities below X-axis (Rose)
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs font-semibold">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span className="text-slate-600 dark:text-slate-300">Assets (+)</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                            <span className="text-slate-600 dark:text-slate-300">Liabilities (-)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bi-Directional Bar Chart */}
+                      {biDirectionalChartData && (
+                        <div className="mt-6 h-64 flex items-center justify-between gap-3 px-2 border-b border-slate-200 dark:border-slate-700">
+                          {snapshotCalculations.map((snp) => {
+                            const assetHeight = (snp.totalAssets / biDirectionalChartData.scaleMax) * 110;
+                            const liabHeight = (snp.totalLiabilities / biDirectionalChartData.scaleMax) * 110;
+
+                            return (
+                              <div key={snp.id} className="flex-1 flex flex-col items-center h-full justify-center group relative">
+                                
+                                {/* Hover Tooltip */}
+                                <div className="opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity absolute -top-10 z-30 bg-slate-900 text-white text-[11px] p-2 rounded-lg shadow-xl whitespace-nowrap">
+                                  <div className="font-bold">{snp.formattedDate}</div>
+                                  <div className="text-emerald-400">Assets: {formatCurrency(snp.totalAssets)}</div>
+                                  <div className="text-rose-400">Liab: {formatCurrency(snp.totalLiabilities)}</div>
+                                  <div className="text-indigo-300">Net: {formatCurrency(snp.netWorth)}</div>
+                                </div>
+
+                                {/* Above X-Axis: Assets Bar */}
+                                <div className="h-28 flex items-end justify-center w-full">
+                                  <div
+                                    style={{ height: `${Math.max(4, assetHeight)}px` }}
+                                    className="w-4 sm:w-6 bg-emerald-500 rounded-t-sm transition-all duration-300 group-hover:bg-emerald-400"
+                                  ></div>
+                                </div>
+
+                                {/* Center X-Axis Zero Line */}
+                                <div className="w-full h-0.5 bg-slate-300 dark:bg-slate-700"></div>
+
+                                {/* Below X-Axis: Liabilities Bar */}
+                                <div className="h-28 flex items-start justify-center w-full">
+                                  <div
+                                    style={{ height: `${Math.max(4, liabHeight)}px` }}
+                                    className="w-4 sm:w-6 bg-rose-500 rounded-b-sm transition-all duration-300 group-hover:bg-rose-400"
+                                  ></div>
+                                </div>
+
+                                {/* Date Label */}
+                                <span className="text-[10px] font-semibold text-slate-400 mt-1">
+                                  {snp.formattedDate}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                      <span>Tracks simultaneous wealth accumulation alongside debt principal paydown.</span>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* ROW 3: CHART 5: Stacked Percentage Bar Chart (Asset Class Composition Shift) */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Icon name="layers" size={18} className="text-indigo-500" />
+                        Asset Class Composition Shift (100% Stacked)
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Visualizing how your allocation percentage across cash, retirement, brokerage, and real estate has shifted over time.
+                      </p>
+                    </div>
+
+                    {/* Category Legend */}
+                    <div className="flex items-center flex-wrap gap-3 text-xs font-medium">
+                      {allAssetCategories.map(cat => (
+                        <div key={cat.id} className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }}></span>
+                          <span className="text-slate-600 dark:text-slate-300">{cat.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 100% Stacked Bar Visualization */}
+                  <div className="space-y-3 pt-2">
+                    {snapshotCalculations.map((snp) => (
+                      <div key={snp.id} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{snp.formattedDate}</span>
+                          <span className="font-semibold text-slate-500 num-tabular">Total: {formatCurrency(snp.totalAssets)}</span>
+                        </div>
+                        <div className="w-full h-5 rounded-lg overflow-hidden flex bg-slate-100 dark:bg-slate-800 shadow-inner">
+                          {allAssetCategories.map((cat) => {
+                            const amount = snp.categoryAssets[cat.id] || 0;
+                            const pct = snp.totalAssets > 0 ? (amount / snp.totalAssets) * 100 : 0;
+                            if (pct <= 0) return null;
+                            return (
+                              <div
+                                key={cat.id}
+                                style={{ width: `${pct}%`, backgroundColor: cat.color }}
+                                className="h-full transition-all duration-300 hover:opacity-80 cursor-pointer"
+                                title={`${cat.label}: ${formatCurrency(amount)} (${pct.toFixed(1)}%)`}
+                              ></div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* ========================================================
+                TAB 2: RECORD SNAPSHOT DATA ENTRY
+               ======================================================== */}
+            {activeTab === 'record' && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm max-w-3xl mx-auto space-y-6">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Icon name="calendar" size={18} className="text-indigo-600 dark:text-indigo-400" />
+                    {editingSnapshot ? 'Edit Financial Snapshot' : 'Record New Net Worth Snapshot'}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Enter the current balance for all active assets and liabilities on this date.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSaveSnapshot} className="space-y-6">
+                  {/* Date & Notes Input */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Snapshot Date *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={entryDate}
+                        onChange={(e) => setEntryDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Memo / Milestone Note
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. End of month review, Bonus payout"
+                        value={entryNotes}
+                        onChange={(e) => setEntryNotes(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* ASSETS SECTION */}
+                  <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Icon name="trendingUp" size={14} />
+                        Assets (Checking, Savings, Investments, Property)
+                      </h3>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {accounts.filter(a => a.type === 'asset').map(acc => (
+                        <div key={acc.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                          <div>
+                            <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                              <span>{acc.name}</span>
+                              {acc.isRetirement && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-semibold border border-amber-200/50">
+                                  Retirement
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400">{acc.institution || acc.category}</div>
+                          </div>
+
+                          <div className="relative w-44">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                            <input
+                              type="number"
+                              step="any"
+                              value={entryBalances[acc.id] !== undefined ? entryBalances[acc.id] : ''}
+                              onChange={(e) => setEntryBalances({ ...entryBalances, [acc.id]: e.target.value })}
+                              placeholder="0.00"
+                              className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white num-tabular text-right focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* LIABILITIES SECTION */}
+                  <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-extrabold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Icon name="trendingDown" size={14} />
+                        Liabilities (Mortgages, Loans, Credit Cards)
+                      </h3>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {accounts.filter(a => a.type === 'liability').map(acc => (
+                        <div key={acc.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                          <div>
+                            <div className="text-xs font-bold text-slate-900 dark:text-white">{acc.name}</div>
+                            <div className="text-[10px] text-slate-400">{acc.institution || acc.category}</div>
+                          </div>
+
+                          <div className="relative w-44">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                            <input
+                              type="number"
+                              step="any"
+                              value={entryBalances[acc.id] !== undefined ? entryBalances[acc.id] : ''}
+                              onChange={(e) => setEntryBalances({ ...entryBalances, [acc.id]: e.target.value })}
+                              placeholder="0.00"
+                              className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white num-tabular text-right focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submit Actions */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('dashboard')}
+                      className="px-4 py-2 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition"
+                    >
+                      {editingSnapshot ? 'Update Snapshot' : 'Save Snapshot Entry'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* ========================================================
+                TAB 3: MANAGE CUSTOM ACCOUNTS
+               ======================================================== */}
+            {activeTab === 'accounts' && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">Active Accounts Directory</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Configure custom accounts and tag retirement vehicles.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setEditingAccount(null); setIsAddAccountModalOpen(true); }}
+                    className="px-3.5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-1.5"
+                  >
+                    <Icon name="plus" size={14} />
+                    <span>Add Account</span>
+                  </button>
+                </div>
+
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {accounts.map(acc => (
+                    <div key={acc.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                          acc.type === 'asset'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
+                        }`}>
+                          <Icon name={acc.type === 'asset' ? 'trendingUp' : 'trendingDown'} size={15} />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>{acc.name}</span>
+                            {acc.isRetirement && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-semibold border border-amber-200/50">
+                                🏖️ Retirement Account
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            {acc.institution} • Type: <span className="capitalize">{acc.type}</span> ({acc.category})
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => { setEditingAccount(acc); setIsAddAccountModalOpen(true); }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition"
+                          title="Edit Account"
+                        >
+                          <Icon name="edit" size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAccount(acc.id)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition"
+                          title="Delete Account"
+                        >
+                          <Icon name="trash" size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================
+                TAB 4: SNAPSHOT HISTORY LEDGER TABLE
+               ======================================================== */}
+            {activeTab === 'history' && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">Historical Snapshot Records</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Review, inspect, or modify prior net worth records.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        <th className="py-3 px-4 sm:px-6">Date</th>
+                        <th className="py-3 px-4 sm:px-6">Memo</th>
+                        <th className="py-3 px-4 sm:px-6 text-right">Total Assets</th>
+                        <th className="py-3 px-4 sm:px-6 text-right">Total Liabilities</th>
+                        <th className="py-3 px-4 sm:px-6 text-right">Net Worth</th>
+                        <th className="py-3 px-4 sm:px-6 text-right">Retirement</th>
+                        <th className="py-3 px-4 sm:px-6 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                      {snapshotCalculations.map(snp => (
+                        <tr key={snp.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                          <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap font-bold text-slate-900 dark:text-white">
+                            {snp.date}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-6 text-slate-500 dark:text-slate-400">
+                            {snp.notes || '—'}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-6 text-right font-semibold text-emerald-600 dark:text-emerald-400 num-tabular">
+                            {formatCurrency(snp.totalAssets)}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-6 text-right font-semibold text-rose-600 dark:text-rose-400 num-tabular">
+                            {formatCurrency(snp.totalLiabilities)}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-6 text-right font-extrabold text-slate-900 dark:text-white num-tabular text-sm">
+                            {formatCurrency(snp.netWorth)}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-6 text-right font-semibold text-amber-600 dark:text-amber-400 num-tabular">
+                            {formatCurrency(snp.retirementAssets)}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => handleEditSnapshotInit(snp)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                title="Edit Snapshot"
+                              >
+                                <Icon name="edit" size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSnapshot(snp.id)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"
+                                title="Delete Snapshot"
+                              >
+                                <Icon name="trash" size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {/* FOOTER */}
+          <footer className="border-t border-slate-200 dark:border-slate-800 mt-16 py-8 bg-white/50 dark:bg-slate-900/50 transition-colors">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">FinVest Suite</span>
+                <span>•</span>
+                <span>App 4 of 4: Net Worth Tracker</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span>Complete Personal Finance Suite</span>
+                <span>•</span>
+                <span>100% Client-Side Local Storage</span>
+              </div>
+            </div>
+          </footer>
+
+          {/* ========================================================
+              MODAL 1: CREATE / EDIT CUSTOM ACCOUNT
+             ======================================================== */}
+          {isAddAccountModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden modal-animate">
+                
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                    {editingAccount ? 'Edit Account' : 'Create Custom Account'}
+                  </h3>
+                  <button
+                    onClick={() => { setIsAddAccountModalOpen(false); setEditingAccount(null); }}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    handleSaveAccount({
+                      name: formData.get('name').trim(),
+                      type: formData.get('type'),
+                      category: formData.get('category'),
+                      institution: formData.get('institution').trim(),
+                      isRetirement: formData.get('isRetirement') === 'on'
+                    });
+                  }}
+                  className="p-5 space-y-4"
+                >
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                      Account Type *
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold text-center">
+                      <label className="cursor-pointer">
+                        <input
+                          type="radio"
+                          name="type"
+                          value="asset"
+                          defaultChecked={editingAccount ? editingAccount.type === 'asset' : true}
+                          className="sr-only peer"
+                        />
+                        <div className="py-2 rounded-lg peer-checked:bg-emerald-600 peer-checked:text-white text-slate-600 dark:text-slate-300 transition">
+                          Asset (+)
+                        </div>
+                      </label>
+                      <label className="cursor-pointer">
+                        <input
+                          type="radio"
+                          name="type"
+                          value="liability"
+                          defaultChecked={editingAccount ? editingAccount.type === 'liability' : false}
+                          className="sr-only peer"
+                        />
+                        <div className="py-2 rounded-lg peer-checked:bg-rose-600 peer-checked:text-white text-slate-600 dark:text-slate-300 transition">
+                          Liability (-)
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Account Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      placeholder="e.g. Fidelity 401(k), Primary Mortgage"
+                      defaultValue={editingAccount ? editingAccount.name : ''}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Category
+                      </label>
+                      <select
+                        name="category"
+                        defaultValue={editingAccount ? editingAccount.category : 'cash'}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      >
+                        <option value="cash">Cash & Savings</option>
+                        <option value="retirement">Retirement Account</option>
+                        <option value="investment">Taxable Brokerage</option>
+                        <option value="real_estate">Real Estate</option>
+                        <option value="crypto">Crypto & Alts</option>
+                        <option value="mortgage">Mortgage</option>
+                        <option value="auto_loan">Auto Loan</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Institution
+                      </label>
+                      <input
+                        type="text"
+                        name="institution"
+                        placeholder="e.g. Vanguard, Chase"
+                        defaultValue={editingAccount ? editingAccount.institution : ''}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Retirement Account Checkbox */}
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="isRetirement"
+                        defaultChecked={editingAccount ? editingAccount.isRetirement : false}
+                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white">Mark as Retirement Account</div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                          Included in the Retirement Tracker trendline (e.g. 401k, Traditional/Roth IRA, HSA).
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-end gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => { setIsAddAccountModalOpen(false); setEditingAccount(null); }}
+                      className="px-4 py-2 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition"
+                    >
+                      Save Account
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================
+              MODAL 2: DATA BACKUP (EXPORT / IMPORT JSON)
+             ======================================================== */}
+          {isBackupModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden modal-animate">
+                
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                      <Icon name="database" size={18} className="text-indigo-500" />
+                      Net Worth Backup & Portability
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Your balance sheet lives exclusively in browser <code className="text-indigo-500">localStorage</code>.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsBackupModalOpen(false)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  
+                  <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs text-indigo-950 dark:text-indigo-200 flex items-start gap-2.5">
+                    <Icon name="shieldCheck" size={16} className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold">Local-First Storage:</span> Saved under key prefix <code className="font-mono text-indigo-600 dark:text-indigo-300">finvest_networth_*</code>.
+                    </div>
+                  </div>
+
+                  {/* Export Section */}
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 dark:text-white">Export Net Worth to JSON</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Download all {snapshots.length} historical snapshots & {accounts.length} accounts.
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleExportBackup}
+                      className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1.5 transition"
+                    >
+                      <Icon name="download" size={14} />
+                      <span>Export JSON</span>
+                    </button>
+                  </div>
+
+                  {/* Import Section */}
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 dark:text-white">Import from JSON</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Restore balance sheet records from a previous backup file.
+                      </div>
+                    </div>
+                    <label className="cursor-pointer px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm flex items-center gap-1.5 transition">
+                      <Icon name="upload" size={14} />
+                      <span>Import File</span>
+                      <input
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={handleImportBackup}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Reset Demo Data */}
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-xs text-slate-500">Need to reload sample demo balance sheet?</span>
+                    <button
+                      onClick={handleResetDemoData}
+                      className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center gap-1"
+                    >
+                      <Icon name="refresh" size={13} />
+                      <span>Load Sample Data</span>
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // Mount with React 18 createRoot
+    const rootEl = document.getElementById('root');
+    if (ReactDOM.createRoot) {
+      ReactDOM.createRoot(rootEl).render(<App />);
+    } else {
+      ReactDOM.render(<App />, rootEl);
+    }
+  </script>
+</body>
+</html>
