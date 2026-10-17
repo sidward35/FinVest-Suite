@@ -1,4 +1,4 @@
-# FinVest Retirement (App 2 of 4)
+# FinVest Retirement
 
 A modern, responsive, local-first web application for retirement planning, probabilistic Monte Carlo simulation, and safe withdrawal rate (SWR) longevity modeling. Built with **React 18**, **Tailwind CSS**, and **Lucide icons**, running 100% client-side with **zero backend dependencies**.
 
@@ -7,7 +7,7 @@ A modern, responsive, local-first web application for retirement planning, proba
 ## 🚀 Key Highlights & Architectural Conformance
 
 1. **Pure Frontend Static Delivery**:
-   - Single-page static app ready to host directly on `https://retirement.yourdomain.com` (Cloudflare Pages, Vercel Static, GitHub Pages, Netlify, or AWS S3).
+   - Single-page static app ready to host directly on `https://finvest.smathur.xyz/retirement-calculator` (Cloudflare Pages, Vercel Static, GitHub Pages, Netlify, or AWS S3).
    - No backend, API routes, or databases required.
 
 2. **Local-First & Data Persistence**:
@@ -22,10 +22,10 @@ A modern, responsive, local-first web application for retirement planning, proba
 
 4. **Unified Navigation & Design System**:
    - Sticky top navigation bar linking to all four apps in the suite:
-     - 📊 **Budget**: `https://budget.yourdomain.com`
-     - 🏖️ **Retirement** (Active): `https://retirement.yourdomain.com`
-     - 📈 **Investments**: `https://investments.yourdomain.com`
-     - 🏛️ **Net Worth**: `https://networth.yourdomain.com`
+     - 📊 **Budget**: `https://finvest.smathur.xyz/money-manager`
+     - 🏖️ **Retirement** (Active): `https://finvest.smathur.xyz/retirement-calculator`
+     - 📈 **Investments**: `https://finvest.smathur.xyz/investments-tracker`
+     - 🏛️ **Net Worth**: `https://finvest.smathur.xyz/networth-tracker`
    - Dark/Light mode toggle synchronized via `finvest_theme`.
    - Linear/Stripe/Vercel aesthetic: Slate neutral scale, Emerald for success/growth, Amber for warnings/drawdowns, Indigo for primary actions.
 
@@ -49,17 +49,3 @@ A modern, responsive, local-first web application for retirement planning, proba
    - 🚀 **FIRE (Aggressive Early)**: Retire at age 45 with 85% equities.
    - ⚖️ **Standard Balanced**: Age 62 retirement with 75/20/5 allocation.
    - 🛡️ **Conservative Wealth Preservation**: Higher bond allocation for stability.
-
----
-
-## 💻 Local Testing & Preview
-
-Open `index.html` directly in your browser, or run a local static server:
-
-```bash
-cd /Users/sid/.gemini/antigravity/scratch/finvest-retirement
-python3 -m http.server 3002
-```
-
-Then visit:
-[http://localhost:3002](http://localhost:3002)

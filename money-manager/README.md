@@ -1,4 +1,4 @@
-# FinVest Budget (App 1 of 4)
+# FinVest Budget
 
 A modern, responsive, local-first web application for personal budgeting and cashflow management. Built with **React 18**, **Tailwind CSS**, and **Lucide icons**, running 100% client-side with **zero backend dependencies**.
 
@@ -7,7 +7,7 @@ A modern, responsive, local-first web application for personal budgeting and cas
 ## 🚀 Key Highlights & Architectural Conformance
 
 1. **Pure Frontend Static Delivery**:
-   - Single-page static app ready to host directly on `https://budget.yourdomain.com` (Cloudflare Pages, Vercel Static, GitHub Pages, Netlify, S3, or any static web host).
+   - Single-page static app ready to host directly on `https://finvest.smathur.xyz/money-manager` (Cloudflare Pages, Vercel Static, GitHub Pages, Netlify, S3, or any static web host).
    - No backend, API routes, or databases required.
 
 2. **Local-First & Data Persistence**:
@@ -22,10 +22,10 @@ A modern, responsive, local-first web application for personal budgeting and cas
 
 4. **Unified Navigation & Design System**:
    - Sticky top navigation bar with links across the suite:
-     - 📊 **Budget** (Active): `https://budget.yourdomain.com`
-     - 🏖️ **Retirement**: `https://retirement.yourdomain.com`
-     - 📈 **Investments**: `https://investments.yourdomain.com`
-     - 🏛️ **Net Worth**: `https://networth.yourdomain.com`
+     - 📊 **Budget** (Active): `https://finvest.smathur.xyz/money-manager`
+     - 🏖️ **Retirement**: `https://finvest.smathur.xyz/retirement-calculator`
+     - 📈 **Investments**: `https://finvest.smathur.xyz/investments-tracker`
+     - 🏛️ **Net Worth**: `https://finvest.smathur.xyz/networth-tracker`
    - Dark/Light mode toggle with persistence in `finvest_theme`.
    - Linear/Stripe/Vercel aesthetic: Slate neutral scale, Emerald inflows, Rose outflows, Indigo primary accents.
 
@@ -33,21 +33,8 @@ A modern, responsive, local-first web application for personal budgeting and cas
    - **Metrics**: Total Income, Total Expenses, Net Cashflow (+/-), and Savings Rate %.
    - **Visualizations**: 
      - Income vs. Expenses monthly trend chart (Jan–Dec 2026).
-     - Spending by category donut & proportional breakdown with emojis and percentages.
+     - Spending by category & proportional breakdown with percentages.
      - Interactive time periods (Monthly & Full Year 2026).
    - **Transaction Management**: Filter by type (All, Expenses, Income), search description/notes, filter by category, sort by date/amount, edit, and delete entries.
    - **Category Customizer**: Custom category builder with 30+ financial emojis and curated color swatches.
-
----
-
-## 💻 Local Testing & Preview
-
-You can open `index.html` directly in any web browser, or run a local static server:
-
-```bash
-cd /Users/sid/.gemini/antigravity/scratch/finvest-budget
-python3 -m http.server 3001
-```
-
-Then visit:
-[http://localhost:3001](http://localhost:3001)
+   

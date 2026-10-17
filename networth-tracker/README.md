@@ -1,4 +1,4 @@
-# FinVest Net Worth Tracker (App 4 of 4)
+# FinVest Net Worth Tracker
 
 A modern, responsive, local-first web application for tracking personal net worth, balance sheet expansion, and retirement savings pacing over time. Built with **React 18**, **Tailwind CSS**, and **Lucide icons**, running 100% client-side with **zero backend dependencies**.
 
@@ -7,7 +7,7 @@ A modern, responsive, local-first web application for tracking personal net wort
 ## 🚀 Key Highlights & Architectural Conformance
 
 1. **Pure Frontend Static Delivery**:
-   - Single-page static app ready to host directly on `https://networth.yourdomain.com` (Cloudflare Pages, Vercel Static, GitHub Pages, Netlify, or AWS S3).
+   - Single-page static app ready to host directly on `https://finvest.smathur.xyz/networth-tracker` (Cloudflare Pages, Vercel Static, GitHub Pages, Netlify, or AWS S3).
    - No backend, API routes, or databases required.
 
 2. **Local-First & Data Persistence**:
@@ -22,10 +22,10 @@ A modern, responsive, local-first web application for tracking personal net wort
 
 4. **Unified Navigation & Design System**:
    - Sticky top navigation bar linking to all four apps in the suite:
-     - 📊 **Budget**: `https://budget.yourdomain.com`
-     - 🏖️ **Retirement**: `https://retirement.yourdomain.com`
-     - 📈 **Investments**: `https://investments.yourdomain.com`
-     - 🏛️ **Net Worth** (Active): `https://networth.yourdomain.com`
+     - 📊 **Budget**: `https://finvest.smathur.xyz/money-manager`
+     - 🏖️ **Retirement**: `https://finvest.smathur.xyz/retirement-calculator`
+     - 📈 **Investments**: `https://finvest.smathur.xyz/investments-tracker`
+     - 🏛️ **Net Worth** (Active): `https://finvest.smathur.xyz/networth-tracker`
    - Dark/Light mode toggle synchronized via `finvest_theme`.
    - Linear/Stripe/Vercel aesthetic: Slate neutral scale, Emerald for assets/surplus, Rose for liabilities/debt, Indigo for primary actions.
 
@@ -43,17 +43,3 @@ A modern, responsive, local-first web application for tracking personal net wort
 
 7. **Historical Ledger Table**:
    - Filter, sort, inspect, edit, or delete any past snapshot record.
-
----
-
-## 💻 Local Testing & Preview
-
-Open `index.html` directly in your browser, or run a local static server:
-
-```bash
-cd /Users/sid/.gemini/antigravity/scratch/finvest-networth
-python3 -m http.server 3004
-```
-
-Then visit:
-[http://localhost:3004](http://localhost:3004)

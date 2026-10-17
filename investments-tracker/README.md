@@ -1,4 +1,4 @@
-# FinVest Investments (App 3 of 4)
+# FinVest Investments
 
 A modern, responsive, local-first web application for point-in-time investment portfolio tracking, interactive treemap heatmaps, and live market quotes via the Finnhub API. Built with **React 18**, **Tailwind CSS**, and **Lucide icons**, running 100% client-side with **zero backend dependencies**.
 
@@ -7,7 +7,7 @@ A modern, responsive, local-first web application for point-in-time investment p
 ## 🚀 Key Highlights & Architectural Conformance
 
 1. **Pure Frontend Static Delivery**:
-   - Single-page static app ready to host directly on `https://investments.yourdomain.com` (Cloudflare Pages, Vercel Static, GitHub Pages, Netlify, or AWS S3).
+   - Single-page static app ready to host directly on `https://finvest.smathur.xyz/investments-tracker` (Cloudflare Pages, Vercel Static, GitHub Pages, Netlify, or AWS S3).
    - No backend, API routes, or databases required.
 
 2. **Local-First & Data Persistence**:
@@ -22,10 +22,10 @@ A modern, responsive, local-first web application for point-in-time investment p
 
 4. **Unified Navigation & Design System**:
    - Sticky top navigation bar linking to all four apps in the suite:
-     - 📊 **Budget**: `https://budget.yourdomain.com`
-     - 🏖️ **Retirement**: `https://retirement.yourdomain.com`
-     - 📈 **Investments** (Active): `https://investments.yourdomain.com`
-     - 🏛️ **Net Worth**: `https://networth.yourdomain.com`
+     - 📊 **Budget**: `https://finvest.smathur.xyz/money-manager`
+     - 🏖️ **Retirement**: `https://finvest.smathur.xyz/retirement-calculator`
+     - 📈 **Investments** (Active): `https://finvest.smathur.xyz/investments-tracker`
+     - 🏛️ **Net Worth**: `https://finvest.smathur.xyz/networth-tracker`
    - Dark/Light mode toggle synchronized via `finvest_theme`.
    - Linear/Stripe/Vercel aesthetic: Slate neutral scale, Emerald for gains, Crimson/Rose for losses, Indigo for primary actions.
 
@@ -45,17 +45,4 @@ A modern, responsive, local-first web application for point-in-time investment p
    - Connect your own free Finnhub API token via the navbar settings dialog.
    - One-click "Fetch Live Quotes" batch queries Finnhub (`https://finnhub.io/api/v1/quote`) with polite rate throttling to update real-time stock/ETF prices and calculate portfolio change.
    - Includes an offline/simulated tick generator for testing without an active API key.
-
----
-
-## 💻 Local Testing & Preview
-
-Open `index.html` directly in your browser, or run a local static server:
-
-```bash
-cd /Users/sid/.gemini/antigravity/scratch/finvest-investments
-python3 -m http.server 3003
-```
-
-Then visit:
-[http://localhost:3003](http://localhost:3003)
+   
